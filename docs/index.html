@@ -220,8 +220,16 @@ textarea:focus{border-color:var(--line)}
 #calltxt{min-height:56px;height:56px;max-height:150px;line-height:1.4}
 [hidden]{display:none!important}
 .tgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;align-items:end}
-.tcol{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
-.ttube{width:100%;max-width:34px;height:112px;border-radius:999px;background:var(--surface-2);display:flex;align-items:flex-end;overflow:hidden}
+.tcol{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;background:none;border:none;color:inherit;font:inherit;padding:4px 0;border-radius:14px;cursor:pointer}
+.tcol.sel{background:var(--surface-2)}
+.dbar{display:flex;height:18px;border-radius:999px;overflow:hidden;gap:2px;background:var(--surface-2)}
+.dbar span{display:block;height:100%}
+.drow{display:grid;grid-template-columns:12px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.drow i{width:12px;height:12px;border-radius:4px}
+.dn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dp{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.drow b{font-variant-numeric:tabular-nums}
+.ttube{display:flex;width:100%;max-width:34px;height:112px;border-radius:999px;background:var(--surface-2);display:flex;align-items:flex-end;overflow:hidden}
 .ttube span{display:block;width:100%;border-radius:999px}
 .tpct{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
 .tcol b{font-size:12px;text-transform:uppercase;letter-spacing:.06em}
@@ -263,7 +271,7 @@ const MIC='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="c
 const XI='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 
 const S={ready:false,profile:null,gastos:[],tab:'home',mode:'app',ob:0,draft:{renda:[],fixas:[],variaveis:[],parcelas:[]},obText:'',obItems:null,obSaid:'',obTom:'amigo',busy:false,err:'',
-  sheet:false,addText:'',pending:null,gedit:null,gSure:false,edit:null,editSure:false,call:null,callText:'',lastUndo:null,confirmWipe:false,setup:false,keyMsg:'',impMsg:'',medit:null,cardSure:null};
+  sheet:false,addText:'',pending:null,gedit:null,gSure:false,edit:null,editSure:false,call:null,callText:'',lastUndo:null,confirmWipe:false,setup:false,keyMsg:'',impMsg:'',medit:null,cardSure:null,pv:null};
 let DB=null,UID=null,SAMPLE=null;
 
 const $=s=>document.querySelector(s);
@@ -318,11 +326,11 @@ async function wipe(){
 /* ---------- money math ---------- */
 function activeParcelas(off){
   const ym=ymOf(NOW())+off,out=[];
-  for(const p of (S.profile?.parcelas||[])){const r=p.restantes-(ym-p.base);if(r>=1)out.push({nome:p.nome,valor:p.valor,cartao:p.cartao,rest:r,total:null,origem:'intro'})}
+  for(const p of (S.profile?.parcelas||[])){const r=p.restantes-(ym-p.base);if(r>=1&&!(p.desde&&ym<p.desde))out.push({nome:p.nome,valor:p.valor,cartao:p.cartao,rest:r,total:null,origem:'intro'})}
   for(const g of S.gastos){if(g.entrada||!(g.parcelas>1))continue;const r=g.parcelas-(ym-g.ym);if(r>=1&&r<=g.parcelas)out.push({nome:g.descricao,valor:g.valor_total/g.parcelas,cartao:g.cartao,rest:r,total:g.parcelas,origem:'voz'})}
   return out;
 }
-function ativo(x,ym){return !x.fim||ym<=x.fim}
+function ativo(x,ym){return (!x.fim||ym<=x.fim)&&(!x.desde||ym>=x.desde)}
 function sumAt(list,ym){return (list||[]).filter(x=>ativo(x,ym)).reduce((a,x)=>a+x.valor,0)}
 function ymLabel(ym){return MES3[ym%12]+'/'+String(Math.floor(ym/12)).slice(2)}
 function metaGuardado(m){return (m.aportes||[]).reduce((a,x)=>a+x.valor,0)}
@@ -877,17 +885,42 @@ function rowGasto(g){
   return '<button class="row rowbtn" data-act="geditOpen" data-arg="'+g.id+'">'+avatar(g.cartao)+'<span class="txt"><strong>'+esc(g.descricao)+'</strong><small>'+esc(meta)+'</small></span>'+
     '<span class="val'+(g.entrada?' in':'')+'">'+(g.entrada?'+ ':'− ')+'R$ '+fmt(g.valor_total)+'</span></button>';
 }
+function startOff(){const now=ymOf(NOW()),p=S.profile||{};
+  const ds=[...(p.renda||[]),...(p.fixas||[]),...(p.variaveis||[]),...(p.parcelas||[])].map(x=>x.desde||0).filter(d=>d>now);
+  if(!ds.length)return 0;const m=monthAt(0);return (m.entra>0||m.comp>0)?0:Math.min(...ds)-now}
+const PAL=['#7A4DF5','#F4F3F8','#A78BFF','#FFB547','#5BC0EB','#FF8A70','#C9C7BF','#8FE3AE','#E07BB5','#6C7BFF'];
+function destinos(off){const ym=ymOf(NOW())+off,p=S.profile||{},out=[];
+  const add=(nome,v)=>{if(v>0.004)out.push({nome,valor:v})};
+  add('Variáveis',sumAt(p.variaveis,ym));add('Fixas',sumAt(p.fixas,ym));
+  const pc={};activeParcelas(off).forEach(x=>{const k=x.cartao||'Outro';pc[k]=(pc[k]||0)+x.valor});
+  Object.entries(pc).forEach(([k,v])=>add(k==='Outro'?'Outras parcelas':'Cartão '+k,v));
+  const gm=S.gastos.filter(g=>g.ym===ym&&!g.entrada&&!(g.parcelas>1));
+  if(off>0)add('Previstos',gm.reduce((a,g)=>a+g.valor_total,0));
+  else{const c={};gm.forEach(g=>{c[g.categoria]=(c[g.categoria]||0)+g.valor_total});Object.entries(c).forEach(([k,v])=>add(k,v))}
+  add('Guardado nas metas',guardadoNo(ym));
+  out.sort((a,b)=>b.valor-a.valor);out.forEach((x,i)=>x.cor=PAL[i%PAL.length]);
+  const x=monthAt(off);if(x.livre>0.004)out.push({nome:'Sobra',valor:x.livre,cor:'var(--lime)'});
+  return {lista:out,entra:x.entra,livre:x.livre}}
+function viewDestinos(off){const d=destinos(off),ym=ymOf(NOW())+off;if(!d.lista.length)return '';
+  const tot=Math.max(d.entra,d.lista.reduce((a,x)=>a+x.valor,0),1);
+  return '<section class="card sec"><div class="sec-h"><h2>Pra onde vai o dinheiro</h2><span class="sub">'+MES[ym%12]+'</span></div>'+
+    '<div class="dbar" role="img" aria-label="Divisão do dinheiro de '+MES[ym%12]+': '+d.lista.map(x=>x.nome+' '+brl(x.valor)).join(', ')+'">'+d.lista.map(x=>'<span style="width:'+(x.valor/tot*100).toFixed(2)+'%;background:'+x.cor+'"></span>').join('')+'</div>'+
+    '<div class="list">'+d.lista.map(x=>'<div class="drow"><i style="background:'+x.cor+'"></i><span class="dn">'+esc(x.nome)+'</span><span class="dp">'+(d.entra>0?Math.round(x.valor/d.entra*100)+'%':'')+'</span><b>'+brl(x.valor)+'</b></div>').join('')+'</div>'+
+    (d.livre<0?'<p class="sub" style="margin:0;color:var(--warn)">Passa do que entra em '+brl(-d.livre)+'.</p>':'')+'</section>'}
 function viewHome(){
-  const m=month(),now=NOW();
-  const fut=[1,2,3,4].map(o=>{const d=new Date(now.getFullYear(),now.getMonth()+o,1);return {m:MES3[d.getMonth()],v:activeParcelas(o).reduce((a,p)=>a+p.valor,0)}});
-  const max=Math.max(1,...fut.map(f=>f.v)),list=m.gm.slice().sort((a,b)=>b.ts-a.ts);
+  const now=NOW(),ym0=ymOf(now),so=startOff(),off=S.pv==null?so:S.pv,ymv=ym0+off,m=month();
+  const list=(off>0?S.gastos.filter(g=>g.ym===ymv):m.gm).slice().sort((a,b)=>b.ts-a.ts);
   const E=Math.max(m.entra,1),w=v=>Math.max(0,Math.min(100,v/E*100)).toFixed(2)+'%';
-  return '<div class="wrap">'+
-  (S.call?'<button class="callbar" data-act="callOpen"><span class="live"></span>Ligação em aberto com o Irineu<b>Voltar</b></button>':'')+
-  '<div class="top"><div style="display:flex;flex-direction:column;gap:2px"><span class="sub">'+(['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][now.getDay()])+', '+now.getDate()+' de '+MES[now.getMonth()]+'</span><span class="mark">irineu<i>.</i></span></div>'+
-    '<button class="iconbtn" aria-label="Ligar pro Irineu" data-act="callOpen">'+PHONE+'</button></div>'+
-  '<h1 class="h1">Seu mês<br>de '+MES[now.getMonth()]+'</h1>'+
-  '<section class="lime-card'+(m.livre<0?' neg':'')+'"><div class="top"><span class="chip-date"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>'+m.left+' dias até virar o mês</span></div>'+
+  const seg='<div class="tons" style="grid-template-columns:repeat(2,minmax(0,1fr))" role="radiogroup" aria-label="Qual mês ver">'+
+    '<button role="radio" aria-checked="'+(off===0)+'" class="'+(off===0?'on':'')+'" data-act="pvSet" data-arg="0">Este mês</button>'+
+    '<button role="radio" aria-checked="'+(off===1)+'" class="'+(off===1?'on':'')+'" data-act="pvSet" data-arg="1">Mês que vem</button></div>';
+  let card;
+  if(off>0){const pv=monthAt(off),dim=new Date(Math.floor(ymv/12),ymv%12+1,0).getDate(),pct=pv.entra>0?Math.round(pv.comp/pv.entra*100):0;
+    card='<section class="lime-card'+(pv.livre<0?' neg':'')+'"><div class="top"><span class="chip-date">Prévia</span></div>'+
+      '<span style="font-size:13px;font-weight:700">'+(pv.livre<0?'Vai faltar em '+MES[ymv%12]:'Sobra prevista em '+MES[ymv%12])+'</span>'+
+      '<div class="ratio"><span class="big">'+Math.trunc(Math.abs(pv.livre)).toLocaleString('pt-BR')+'</span><span class="of">/ '+Math.round(pv.entra).toLocaleString('pt-BR')+'</span></div>'+
+      '<span class="sub">'+pct+'% do que entra já tem dono'+(pv.livre>0?' · uns <b>'+brl(pv.livre/dim)+'</b> por dia':'')+'</span></section>'}
+  else card='<section class="lime-card'+(m.livre<0?' neg':'')+'"><div class="top"><span class="chip-date"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>'+m.left+' dias até virar o mês</span></div>'+
     '<span style="font-size:13px;font-weight:700">'+(m.livre<0?'Passou do mês em':'Livre até o fim do mês')+'</span>'+
     '<div class="ratio"><span class="big">'+Math.trunc(Math.abs(m.livre)).toLocaleString('pt-BR')+'</span><span class="of">/ '+Math.round(m.entra).toLocaleString('pt-BR')+'</span></div>'+
     '<div class="bar" role="img" aria-label="Do que entra: contas '+brl(m.fixas)+', parcelas '+brl(m.parc)+', gasto '+brl(m.gasto)+'">'+
@@ -898,31 +931,36 @@ function viewHome(){
     '<div><small><i class="stripe"></i>Parcelas do mês</small><strong>'+brl(m.parc)+'</strong></div>'+
     '<div><small><i style="background:rgba(17,17,19,.45)"></i>Gasto no mês</small><strong>'+brl(m.gasto)+'</strong></div>'+
     '<div><small>Por dia</small><strong>'+(m.livre>0?brl(m.perDay):'R$ 0,00')+'</strong></div></div>'+
-    (m.guardado>0?'<span class="sub" style="font-size:12px">O livre já desconta os '+brl(m.guardado)+' que você guardou nas metas.</span>':'')+'</section>'+
-  (S.profile?'<div class="bubble ir" style="max-width:100%">'+esc(greeting())+'</div>':'')+
-  viewTermo()+
-  '<section class="sec" style="gap:0"><div class="sec-h"><h2>Lançamentos</h2><span class="sub">'+list.length+' em '+MES[now.getMonth()]+'</span></div><div class="list">'+
-    (list.length?listByDay(list):'<p class="empty">Nada lançado ainda. Toque no microfone verde e conta pro Irineu o que você gastou.</p>')+
+    (m.guardado>0?'<span class="sub" style="font-size:12px">O livre já desconta os '+brl(m.guardado)+' que você guardou nas metas.</span>':'')+'</section>';
+  return '<div class="wrap">'+
+  (S.call?'<button class="callbar" data-act="callOpen"><span class="live"></span>Ligação em aberto com o Irineu<b>Voltar</b></button>':'')+
+  '<div class="top"><div style="display:flex;flex-direction:column;gap:2px"><span class="sub">'+(['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][now.getDay()])+', '+now.getDate()+' de '+MES[now.getMonth()]+'</span><span class="mark">irineu<i>.</i></span></div>'+
+    '<button class="iconbtn" aria-label="Ligar pro Irineu" data-act="callOpen">'+PHONE+'</button></div>'+
+  '<h1 class="h1">'+(off>0?'Prévia de<br>'+MES[ymv%12]:'Seu mês<br>de '+MES[now.getMonth()])+'</h1>'+seg+card+
+  (off===0&&S.profile?'<div class="bubble ir" style="max-width:100%">'+esc(greeting())+'</div>':'')+
+  viewDestinos(off)+viewTermo(off)+
+  '<section class="sec" style="gap:0"><div class="sec-h"><h2>'+(off>0?'Previstos':'Lançamentos')+'</h2><span class="sub">'+list.length+' em '+MES[ymv%12]+'</span></div><div class="list">'+
+    (list.length?listByDay(list):'<p class="empty">'+(off>0?'Nada previsto pra '+MES[ymv%12]+'. Dá pra adicionar na aba Contas.':'Nada lançado ainda. Toque no microfone verde e conta pro Irineu o que você gastou.')+'</p>')+
   '</div></section></div>';
 }
-function viewTermo(){
-  const it=[0,1,2,3,4,5].map(o=>{const x=monthAt(o),pct=x.entra>0?Math.round(x.comp/x.entra*100):0;return {...x,pct,c:climaOf(pct,x.entra)}});
-  const fut=it.slice(1).filter(x=>x.entra>0),best=fut.length?fut.reduce((a,b)=>b.livre>a.livre?b:a):null,worst=fut.length?fut.reduce((a,b)=>b.pct>a.pct?b:a):null;
+function viewTermo(sel){
+  const s0=startOff(),it=[0,1,2,3,4,5].map(i=>{const o=s0+i,x=monthAt(o),pct=x.entra>0?Math.round(x.comp/x.entra*100):0;return {...x,o,pct,c:climaOf(pct,x.entra)}});
+  const fut=it.filter(x=>x.o>0&&x.entra>0),best=fut.length?fut.reduce((a,b)=>b.livre>a.livre?b:a):null,worst=fut.length?fut.reduce((a,b)=>b.pct>a.pct?b:a):null;
   const msg=[];if(worst&&worst.pct>80)msg.push('<b>Atenção em '+MES[worst.ym%12]+':</b> '+worst.pct+'% já tem dono, sobra '+brl(worst.livre)+'.');
   if(best)msg.push('<b>Mais leve: '+MES[best.ym%12]+'</b>, sobra '+brl(best.livre)+'.');
   return '<section class="card sec"><div class="sec-h"><h2>Termômetro</h2><button class="pilllink" data-act="tab" data-arg="parc">Ver contas</button></div>'+
-    '<div class="tgrid" role="list">'+it.map((x,i)=>'<div class="tcol" role="listitem" aria-label="'+MES[x.ym%12]+': '+x.pct+'% comprometido, '+x.c.nome+'"><span class="tpct">'+(x.entra>0?x.pct+'%':'–')+'</span><div class="ttube"><span style="height:'+Math.max(4,Math.min(100,x.pct))+'%;background:'+x.c.cor+'"></span></div><b>'+MES3[x.ym%12]+'</b><small>'+x.c.nome+'</small></div>').join('')+'</div>'+
+    '<div class="tgrid">'+it.map(x=>'<button class="tcol'+(x.o===sel?' sel':'')+'" data-act="pvSet" data-arg="'+x.o+'" aria-label="Ver '+MES[x.ym%12]+': '+x.pct+'% comprometido, '+x.c.nome+'"><span class="tpct">'+(x.entra>0?x.pct+'%':'–')+'</span><span class="ttube"><span style="height:'+Math.max(4,Math.min(100,x.pct))+'%;background:'+x.c.cor+'"></span></span><b>'+MES3[x.ym%12]+'</b><small>'+x.c.nome+'</small></button>').join('')+'</div>'+
     (msg.length?'<p class="sub" style="margin:0;color:var(--fg)">'+msg.join(' ')+'</p>':'')+
-    '<p class="sub" style="margin:0;font-size:12px">Quanto do que entra já tem dono em cada mês. O mês atual inclui o que você já gastou.</p></section>';
+    '<p class="sub" style="margin:0;font-size:12px">Toque num mês pra ver a prévia dele. O mês atual inclui o que você já gastou.</p></section>';
 }
 function viewParc(){
   const p=prof(),now=NOW(),F=sumAt(p.fixas,ymOf(now)),V=sumAt(p.variaveis,ymOf(now));
-  const pp=p.parcelas.map((x,i)=>({...x,i,rest:restOf(x)})).filter(x=>x.rest>=1);
+  const pp=p.parcelas.map((x,i)=>({...x,i,rest:x.desde&&x.desde>ymOf(now)?x.restantes:restOf(x)})).filter(x=>x.rest>=1);
   const voz=activeParcelas(0).filter(x=>x.origem==='voz');
   const P=pp.reduce((a,x)=>a+x.valor,0)+voz.reduce((a,x)=>a+x.valor,0),T=F+V+P,w=v=>(T>0?v/T*100:0).toFixed(2)+'%';
   const endTxt=r=>{const e=new Date(now.getFullYear(),now.getMonth()+r-1,1);return r===1?'última este mês':'faltam '+r+' · até '+MES3[e.getMonth()]};
   const addBtn=k=>'<button class="pilllink" data-act="editNew" data-arg="'+k+'">+ adicionar</button>';
-  const row=(k,x,i,meta)=>'<button class="row rowbtn" data-act="editOpen" data-arg="'+k+':'+i+'">'+(k==='parcelas'?avatar(x.cartao):'')+'<span class="txt"><strong>'+esc(x.nome)+'</strong><small>'+esc(x.pendente?'Dúvida: '+x.pendente:meta+(x.fim?(x.fim<ymOf(now)?' · acabou':' · até '+ymLabel(x.fim)):''))+'</small></span>'+
+  const row=(k,x,i,meta)=>'<button class="row rowbtn" data-act="editOpen" data-arg="'+k+':'+i+'">'+(k==='parcelas'?avatar(x.cartao):'')+'<span class="txt"><strong>'+esc(x.nome)+'</strong><small>'+esc(x.pendente?'Dúvida: '+x.pendente:meta+(k!=='parcelas'&&x.desde&&x.desde>ymOf(now)?' · a partir de '+ymLabel(x.desde):'')+(x.fim?(x.fim<ymOf(now)?' · acabou':' · até '+ymLabel(x.fim)):''))+'</small></span>'+
     (x.pendente?'<span class="qb" aria-label="Com dúvida">?</span>':'')+'<span class="val">'+brl(x.valor)+'</span>'+CHEV+'</button>';
   const np=[...p.renda,...p.fixas,...p.variaveis,...p.parcelas].filter(x=>x.pendente).length,prev=S.gastos.filter(g=>g.ym>ymOf(now)).sort((a,b)=>a.ts-b.ts);
   return '<div class="wrap"><h1 class="h1">Contas</h1>'+
@@ -934,7 +972,7 @@ function viewParc(){
   '<section class="sec" style="gap:4px"><div class="sec-h"><h2>Fixas</h2>'+addBtn('fixas')+'</div><div class="list">'+(p.fixas.length?p.fixas.map((x,i)=>row('fixas',x,i,x.dia?'todo dia '+x.dia:'mesmo valor todo mês')).join(''):'<p class="empty">Aluguel, internet, academia… o que tem o mesmo valor todo mês.</p>')+'</div></section>'+
   '<section class="sec" style="gap:4px"><div class="sec-h"><h2>Variáveis</h2>'+addBtn('variaveis')+'</div><div class="list">'+(p.variaveis.length?p.variaveis.map((x,i)=>row('variaveis',x,i,'valor de '+MES[now.getMonth()]+' · toque pra atualizar')).join(''):'<p class="empty">Obra, luz, água… o que vem todo mês com valor diferente. Na ligação, fala "a obra esse mês deu 2.300" que eu atualizo.</p>')+'</div></section>'+
   '<section class="sec" style="gap:4px"><div class="sec-h"><h2>Parcelas</h2>'+addBtn('parcelas')+'</div><div class="list">'+
-    (pp.length||voz.length?pp.sort((a,b)=>b.rest-a.rest).map(x=>row('parcelas',x,x.i,x.cartao+' · '+endTxt(x.rest))).join('')+
+    (pp.length||voz.length?pp.sort((a,b)=>b.rest-a.rest).map(x=>row('parcelas',x,x.i,x.cartao+' · '+(x.desde&&x.desde>ymOf(now)?'começa em '+MES[x.desde%12]+' · '+x.restantes+(x.restantes>1?' parcelas':' parcela'):endTxt(x.rest)))).join('')+
       voz.map(x=>'<div class="row">'+avatar(x.cartao)+'<span class="txt"><strong>'+esc(x.nome)+'</strong><small>'+esc(x.cartao+' · '+endTxt(x.rest)+' · lançada no Início')+'</small></span><span class="val">'+brl(x.valor)+'</span></div>').join('')
     :'<p class="empty">Nenhuma parcela ativa.</p>')+'</div></section>'+
   '<section class="sec" style="gap:4px"><div class="sec-h"><h2>Previstos</h2><button class="pilllink" data-act="geditNew">+ adicionar</button></div><div class="list">'+
@@ -1137,7 +1175,7 @@ const A={
   editNew(k){S.err='';S.editSure=false;S.edit={src:'prof',k,i:-1,d:{key:k,nome:'',valor:0,dia:null,rest:1,cartao:userCards()[0]||'Outro',pendente:'',fim:null}};render();focusNow('#e-nome')},
   editOpen(arg){const pr=arg.split(':'),src=pr[0]==='call'?'call':'prof',k=src==='call'?pr[1]:pr[0],i=+(src==='call'?pr[2]:pr[1]);
     const x=(src==='call'?callLists():prof())[k][i];if(!x)return;S.err='';S.editSure=false;
-    S.edit={src,k,i,d:{key:k,nome:x.nome,valor:x.valor,dia:x.dia||null,rest:k==='parcelas'?Math.max(1,restOf(x)):1,cartao:x.cartao||'Outro',pendente:x.pendente||'',fim:x.fim||null}};render()},
+    S.edit={src,k,i,d:{key:k,nome:x.nome,valor:x.valor,dia:x.dia||null,rest:k==='parcelas'?(x.desde&&x.desde>ymOf(NOW())?x.restantes:Math.max(1,restOf(x))):1,cartao:x.cartao||'Outro',pendente:x.pendente||'',fim:x.fim||null}};render()},
   editClose(){S.edit=null;S.editSure=false;S.err='';render()},
   async editSave(){readEdit();const e=S.edit,d=e.d;
     if(!d.nome.trim()){S.err='Dá um nome pro item.';return render()}
@@ -1145,6 +1183,7 @@ const A={
     const base=e.src==='call'?callLists():prof(),p=JSON.parse(JSON.stringify(base)),old=e.i>=0?base[e.k][e.i]:null;
     const it={nome:d.nome.trim().slice(0,40),valor:d.valor};
     if(d.key==='parcelas'){it.restantes=Math.max(1,d.rest|0);it.base=ymOf(NOW());it.cartao=d.cartao}else{it.dia=d.dia||null;if(d.fim)it.fim=d.fim}
+    {const od=e.i>=0?base[e.k][e.i]:null;if(od&&od.desde&&od.desde>ymOf(NOW())){it.desde=od.desde;if(d.key==='parcelas')it.base=od.desde}}
     if(e.i>=0&&d.key===e.k)p[e.k][e.i]=it;else{if(e.i>=0)p[e.k].splice(e.i,1);p[d.key].push(it)}
     try{if(e.src==='call')await setCallLists(p);else await saveProfile(p);
       if(S.call&&old){const a=normKey(old.nome),b=normKey(it.nome);S.call.duvidas=(S.call.duvidas||[]).filter(q=>{const n=normKey(q.item);return n!==a&&n!==b});await saveCall()}
@@ -1180,6 +1219,7 @@ const A={
   exportFile(){const data=JSON.stringify({v:1,exportado:new Date().toISOString(),profile:S.profile,gastos:S.gastos});
     const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download='irineu-backup-'+new Date().toISOString().slice(0,10)+'.json';
     document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);toast('Backup baixado.')},
+  pvSet(o){S.pv=+o;render();window.scrollTo(0,0)},
   callStart(){startCall('intro')},
   callOpen(){if(S.call){S.mode='call';render();scrollEnd();if(SR)micStart('call');else focusNow('#calltxt');return}startCall(S.profile&&S.profile.onboarded?'livre':'intro')},
   callResume(){S.mode='call';render();scrollEnd()},
