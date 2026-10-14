@@ -49,6 +49,7 @@ button{cursor:pointer}
 .lime-card .sub{color:rgba(17,17,19,.66)}
 .lime-card .sub b{color:var(--ink)}
 .lime-card.neg{background:var(--warn)}
+.lime-card.neg .big{color:var(--ink)}
 .ratio{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
 .ratio .of{font-family:var(--display);font-size:22px;font-weight:400;opacity:.55;letter-spacing:-.02em}
 .bar{height:34px;border-radius:999px;background:rgba(17,17,19,.14);display:flex;overflow:hidden;padding:3px;gap:3px}
@@ -268,6 +269,47 @@ body{margin:0}
 button{transition:transform .14s ease,background-color .2s ease,color .2s ease}
 button:active:not(:disabled){transform:scale(.96)}
 .rowbtn:active:not(:disabled),.anot:active,.callbar:active{transform:scale(.99)}
+
+/* ---------- v5: meses, faturas, metas ---------- */
+.mstrip{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding:2px 16px;scroll-behavior:smooth}
+.mstrip::-webkit-scrollbar{display:none}
+.mchip{flex:0 0 auto;min-width:60px;min-height:60px;border-radius:20px;border:1px solid var(--line);background:var(--surface);color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:6px 10px;position:relative}
+.mchip b{font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:var(--fg)}
+.mchip small{font-size:10px;min-height:13px}
+.mchip i{width:6px;height:6px;border-radius:50%;position:absolute;top:8px;right:8px}
+.mchip.on{background:var(--lime);border-color:var(--lime);color:rgba(17,17,19,.65)}
+.mchip.on b{color:var(--ink)}
+.fat{background:var(--surface);border:1px solid var(--line);border-radius:22px;overflow:hidden}
+.fathead{width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;background:none;border:none;text-align:left;color:inherit}
+.fathead .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.fathead .txt small{font-size:12px;color:var(--muted)}
+.fathead .val{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fchev{display:flex;color:var(--dim);transition:transform .25s ease}
+.fat.open .fchev{transform:rotate(180deg)}
+.fatbody{padding:0 14px 6px;border-top:1px solid var(--line)}
+.fatbody .row:last-child{border-bottom:none}
+.fatbody.fresh{animation:vin .28s cubic-bezier(.2,.8,.2,1) both}
+.cofre{gap:16px}
+.cofre-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.cofre .sub{color:rgba(255,255,255,.75)}
+.ring2{width:104px;height:104px;flex-shrink:0}
+.v-in .ring2 .arc{animation:arc .9s .15s cubic-bezier(.2,.8,.2,1) both}
+@keyframes arc{from{stroke-dashoffset:var(--c)}}
+.fonte{font-size:11px;color:rgba(17,17,19,.55)}
+.nextm{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;align-items:baseline;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:14px 16px}
+.nextm b{font-family:var(--display);font-weight:400;font-size:24px;letter-spacing:-.03em;color:var(--lime);grid-row:span 2;white-space:nowrap}
+.nextm span{font-size:14px}
+.nextm span b{font-family:var(--body);font-size:inherit;color:var(--fg);font-weight:700;letter-spacing:0}
+.nextm small{font-size:12px;color:var(--muted)}
+.wish{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.wish small{font-size:12px;color:var(--muted)}
+.wish.ok{border-color:var(--lime)}
+.wish.ok small{color:var(--lime)}
+.wish .x{width:30px;height:30px}
+.badges{display:flex;flex-wrap:wrap;gap:8px}
+.bdg{display:inline-flex;align-items:center;gap:5px;border:1px dashed var(--line);border-radius:999px;padding:8px 12px;font-size:12px;font-weight:700;color:var(--dim)}
+.bdg.on{background:var(--lime);border:1px solid var(--lime);color:var(--ink)}
+.v-in .bdg.on{animation:bin .35s ease-out both}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
@@ -295,7 +337,7 @@ const MIC='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="c
 const XI='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 
 const S={ready:false,profile:null,gastos:[],tab:'home',mode:'app',ob:0,draft:{renda:[],fixas:[],variaveis:[],parcelas:[]},obText:'',obItems:null,obSaid:'',obTom:'amigo',busy:false,err:'',
-  sheet:false,addText:'',pending:null,gedit:null,gSure:false,edit:null,editSure:false,call:null,callText:'',lastUndo:null,confirmWipe:false,setup:false,keyMsg:'',impMsg:'',medit:null,cardSure:null,pv:null};
+  sheet:false,addText:'',pending:null,gedit:null,gSure:false,edit:null,editSure:false,call:null,callText:'',lastUndo:null,confirmWipe:false,setup:false,keyMsg:'',impMsg:'',medit:null,cardSure:null,pv:null,fatOpen:new Set(),fatJust:null,redo:false};
 let DB=null,UID=null,SAMPLE=null;
 
 const $=s=>document.querySelector(s);
@@ -316,11 +358,8 @@ async function boot(){
   syncCards();S.ready=true;
   if(!getKey()&&!S.profile)S.setup=true;
   if(!S.profile||!S.profile.onboarded){S.mode='ob';S.ob=0}
-  try{const k=await loadCall();if(k&&!k.done&&Array.isArray(k.log)){S.call={...k,busy:false,duvidas:k.duvidas||[],feitos:k.feitos||[],draftGastos:k.draftGastos||[],
-    draft:k.draft||{renda:[],fixas:[],variaveis:[],parcelas:[]},mode:k.mode||(S.profile&&S.profile.onboarded?'livre':'intro')};S.mode='call'}}catch(e){}
-  try{S.callText=localStorage.getItem('irineu_calltxt')||''}catch(e){}
+  clearCall();
   render();
-  if(S.call)processQueue();
 }
 async function load(){
   if(DB){
@@ -635,204 +674,12 @@ async function registrar(g,t){const rec=recFrom(g,t);await addGasto(rec);const i
     async()=>{try{await delGasto(id);toast('Desfeito.')}catch(e){toast('Não consegui desfazer agora.')}render()})}
 async function updateGasto(id,rec){if(DB)await profRef().collection('gastos').doc(id).set(rec);const i=S.gastos.findIndex(g=>g.id===id);if(i>=0)S.gastos[i]={id,...rec};if(!DB)saveLocal()}
 
-/* ---------- ligação com o Irineu ---------- */
-const CHECK=[['renda','Renda'],['fixas','Fixas'],['variaveis','Variáveis'],['parcelas','Parcelas'],['Nubank','Nubank'],['C6','C6'],['Santander','Santander']];
-const QUICKQ=['Quanto posso gastar por dia?','Onde estou gastando mais?','Quais parcelas acabam primeiro?'];
-const CAMPOS=['tipo','restantes','cartao','dia','valor','duplicado'];
-function callRef(){return DB.doc('data/users/'+UID+'/call')}
-async function loadCall(){if(DB){const x=await callRef().get();return x.exists?{...x.data()}:null}
-  try{return JSON.parse(localStorage.getItem('irineu_call')||'null')}catch(e){return null}}
-async function saveCall(){const c=S.call;if(!c)return;
-  const doc={mode:c.mode,log:c.log.slice(-80).map(e=>{const o={who:e.who,text:e.text};if(e.pend)o.pend=true;if(e.lines&&e.lines.length)o.lines=e.lines;if(e.undone)o.undone=true;return o}),
-    draft:c.draft,draftGastos:c.draftGastos||[],started:c.started,voz:c.voz!==false,duvidas:c.duvidas||[],feitos:c.feitos||[],retry:!!c.retry,done:false};
-  try{localStorage.setItem('irineu_call',JSON.stringify(doc))}catch(e){}
-  if(DB){try{await callRef().set(doc)}catch(e){}}}
-async function clearCall(){try{localStorage.removeItem('irineu_call');localStorage.removeItem('irineu_calltxt')}catch(e){}if(DB){try{await callRef().delete()}catch(e){}}}
-function mmss(ms){const t=Math.max(0,Math.floor(ms/1000));return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')}
-function speak(t){if(!S.call||S.call.voz===false||document.hidden||!window.speechSynthesis)return;
-  try{const my=++spkId,u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';const v=speechSynthesis.getVoices().find(v=>/^pt[-_]BR/i.test(v.lang));if(v)u.voice=v;u.rate=1.05;
-    const done=()=>{if(my!==spkId||!SPEAKING)return;SPEAKING=false;clearTimeout(spkT);micUI();if(MICST.on)setTimeout(listen,250)};
-    u.onend=done;u.onerror=done;
-    if(MICST.rec&&MICST.listening){try{MICST.rec.abort()}catch(e){}}
-    SPEAKING=true;speechSynthesis.cancel();speechSynthesis.speak(u);clearTimeout(spkT);spkT=setTimeout(done,1500+t.length*75);micUI()}catch(e){SPEAKING=false}}
-function scrollEnd(){requestAnimationFrame(()=>{fitDock();window.scrollTo(0,document.body.scrollHeight)})}
-function fitDock(){const dk=document.querySelector('.dock'),w=document.querySelector('.callwrap');if(dk&&w)w.style.paddingBottom=(dk.offsetHeight+24)+'px'}
-function callLists(){const c=S.call;if(c&&c.mode==='intro'){const d=c.draft||{};return {renda:d.renda||[],fixas:d.fixas||[],variaveis:d.variaveis||[],parcelas:d.parcelas||[]}}return prof()}
-async function setCallLists(p){const L={renda:p.renda||[],fixas:p.fixas||[],variaveis:p.variaveis||[],parcelas:p.parcelas||[]};
-  if(S.call&&S.call.mode==='intro'){S.call.draft=L;await saveCall()}else await saveProfile({...prof(),...L})}
-function checkState(){const c=S.call,L=callLists(),f=(c&&c.feitos)||[];
-  return CHECK.map(([k,l])=>({l,ok:(['renda','fixas','variaveis','parcelas'].includes(k)?L[k].length>0:L.parcelas.some(x=>x.cartao===k))||f.includes(l)}))}
-function compactLists(L){return {renda:L.renda.map(x=>[x.nome,x.valor]),fixas:L.fixas.map(x=>[x.nome,x.valor]),variaveis:L.variaveis.map(x=>[x.nome,x.valor]),parcelas:L.parcelas.map(x=>[x.nome,x.valor,Math.max(1,restOf(x)),x.cartao||'Outro'])}}
-function ctxResumo(){const m=month(),cat={};m.gm.filter(g=>!g.entrada).forEach(g=>{const v=g.parcelas>1?g.valor_total/g.parcelas:g.valor_total;cat[g.categoria]=Math.round((cat[g.categoria]||0)+v)});
-  return {hoje:NOW().toLocaleDateString('pt-BR'),dias_restantes:m.left,entra:Math.round(m.entra),contas:Math.round(m.fixas),parcelas_mes:Math.round(m.parc),gasto_mes:Math.round(m.gasto),
-    livre:Math.round(m.livre),livre_por_dia:Math.round(m.perDay),por_categoria:cat,proximos_meses:[1,2,3,4,5].map(o=>{const x=monthAt(o);return [MES[x.ym%12],x.entra>0?Math.round(x.comp/x.entra*100)+'%':'-',Math.round(x.livre)]}),metas:((S.profile&&S.profile.metas)||[]).map(m=>[m.nome,m.alvo,Math.round(metaGuardado(m)),m.prazo?ymLabel(m.prazo):'']),parcelas_proximos_meses:[1,2,3].map(o=>Math.round(activeParcelas(o).reduce((a,p)=>a+p.valor,0)))}}
-function normAcoes(arr){return arr.map(a=>({acao:['adicionar','atualizar','remover'].includes(a.acao)?a.acao:'adicionar',tipo:TIPO2KEY[a.tipo]?a.tipo:'fixa',nome:String(a.nome||'Item').slice(0,40),
-  valor:a.valor==null?null:Number(a.valor),dia:a.dia?Number(a.dia):null,restantes:a.restantes?Math.max(1,Math.round(Number(a.restantes))):null,cartao:CARDS.includes(a.cartao)?a.cartao:null}))
-  .filter(a=>a.acao==='remover'||a.valor>0||(a.acao==='atualizar'&&(a.dia||a.restantes)))}
-function normGastos(arr){return (Array.isArray(arr)?arr:[]).map(g=>({descricao:String(g.descricao||'Gasto').slice(0,40),valor_total:Number(g.valor_total)||0,parcelas:Math.max(1,Math.round(Number(g.parcelas)||1)),
-  cartao:CARDS.includes(g.cartao)?g.cartao:'Outro',forma:FORMAS.includes(g.forma)?g.forma:'crédito',categoria:CATS.includes(g.categoria)?g.categoria:catOf(g.descricao,''),entrada:!!g.entrada})).filter(g=>g.valor_total>0)}
-function normDuvidas(arr){return (Array.isArray(arr)?arr:[]).filter(d=>d&&typeof d.pergunta==='string'&&typeof d.item==='string').map(d=>({item:d.item.slice(0,40),campo:CAMPOS.includes(d.campo)?d.campo:'outro',
-  pergunta:d.pergunta.slice(0,200),opcoes:(Array.isArray(d.opcoes)?d.opcoes:[]).map(String).filter(Boolean).slice(0,4)})).slice(0,6)}
-async function askJSONcall(prompt){if(!SAMPLE)return null;
-  try{return await SAMPLE.json(prompt,{modelTier:'quick',cache:false})}
-  catch(e){const c=e&&e.code;if(['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(c))SAMPLE=null;return null}}
-async function callAI(texts){
-  const c=S.call,L=callLists(),intro=c.mode==='intro';
-  const hist=c.log.filter(e=>!e.pend).slice(-6).map(e=>(e.who==='eu'?'Usuário: ':'Irineu: ')+e.text).join('\n');
-  const done=checkState().filter(x=>x.ok).map(x=>x.l);
-  const prompt='Você é o Irineu, consultor financeiro pessoal, numa ligação com o usuário. '+TONS[tom()].regra+' Nunca ofenda.\n'+
-    (intro?'Objetivo: montar o mês dele: renda (salário, freelas, dia que cai), contas fixas (mesmo valor todo mês), contas variáveis (todo mês, mas o valor muda: obra, luz, água) e parcelas (valor de cada parcela, quantas faltam, cartão). Ele alterna com os apps dos bancos (Nubank, C6, Santander) pra lembrar; guie banco por banco. Roteiro já cumprido: '+JSON.stringify(done)+'.\n'
-      :'Ele já usa o app: pode contar gastos do dia a dia, mudar contas ou perguntar sobre o mês. Resumo do mês: '+JSON.stringify(ctxResumo())+'.\n')+
-    'Anotado: '+JSON.stringify(compactLists(L))+' (parcelas = [nome, valor da parcela, faltam, cartão]).\n'+
-    ((c.duvidas||[]).length?'Dúvidas abertas: '+JSON.stringify(c.duvidas.map(d=>d.pergunta))+'\n':'')+
-    (hist?'Conversa recente:\n'+hist+'\n':'')+
-    'Ele acabou de falar (ditado, pode vir sem pontuação):\n'+texts.map(t=>'- '+t).join('\n')+'\n\n'+
-    'Responda só com JSON: {"acoes":[{"acao":"adicionar"|"atualizar"|"remover","tipo":"renda"|"fixa"|"variavel"|"parcela","nome":string,"valor":number|null,"dia":inteiro|null,"restantes":inteiro|null,"cartao":'+cardEnum()+'|null}],'+
-    '"gastos":[{"descricao":string,"valor_total":number,"parcelas":inteiro,"cartao":'+cardEnum(1)+',"forma":"crédito"|"débito"|"pix"|"dinheiro","categoria":string,"entrada":boolean}],'+
-    '"duvidas":[{"item":string,"campo":"tipo"|"restantes"|"cartao"|"dia"|"valor"|"duplicado","pergunta":string,"opcoes":[string]}],"feitos":[string],"resposta":string,"terminou":boolean}\n'+
-    'acoes: renda e contas de todo mês, uma ação por item, nunca junte itens. Parcela em andamento ("faltam 6 do notebook"): valor de cada parcela, restantes contando a deste mês. "atualizar" usa o nome já anotado; "remover" quando acabou ou cancelou. 1.800 = mil e oitocentos.\n'+
-    'gastos: compras avulsas ("gastei 40 no mercado", "comprei um tênis de 600 em 4x"); categoria é uma de: '+CATS.join(', ')+'.\n'+
-    'duvidas: todas as dúvidas ainda abertas, a mais importante primeiro, sem repetir as que ele já respondeu: tipo incerto (opcoes "Fixa","Variável","Parcela","Renda"), parcela sem quantidade (opcoes como "2","3","6","12"), sem cartão (opcoes '+CARDS.filter(c=>c!=='Dinheiro').map(c=>'"'+c+'"').join(',')+'), valor estranho (opcoes com os dois valores, ex. "R$ 1.660","R$ 166"), item repetido (campo "duplicado", opcoes "São duas","É uma só"). Até 4 opções.\n'+
-    'feitos: dos itens '+CHECK.map(x=>x[1]).join(', ')+', os que ele disse que terminou ou que não tem.\n'+
-    'resposta: fala de ligação, 1 a 3 frases curtas, sem listas nem emojis. Confirme o que anotou com os valores. Se ele perguntou algo, responda com os números. Se houver dúvida, termine com a primeira; senão '+(intro?'puxe o próximo item do roteiro':'pergunte se tem mais alguma coisa')+'. "terminou" só é true se ele disser que acabou.';
-  const r=await askJSONcall(prompt);
-  if(r&&typeof r.resposta==='string'){
-    const feitos=(Array.isArray(r.feitos)?r.feitos:[]).map(x=>{const n=normKey(x),hit=CHECK.find(k=>normKey(k[1])===n);return hit?hit[1]:null}).filter(Boolean);
-    return {acts:normAcoes(Array.isArray(r.acoes)?r.acoes:[]),gastos:normGastos(r.gastos),duvidas:normDuvidas(r.duvidas),feitos,resposta:r.resposta.slice(0,600),terminou:!!r.terminou};
-  }
-  const acts=[],gastos=[];
-  for(const t of texts){if(/\b(gastei|comprei|paguei|recebi)\b/i.test(t)){const g=localGasto(t);if(g.valor_total>0){gastos.push({...g,categoria:g.entrada?'Outros':catOf(g.descricao,t)});continue}}acts.push(...localBatch(t))}
-  const n=acts.length+gastos.length;
-  return {acts,gastos,duvidas:c.duvidas||[],feitos:[],resposta:n?'Anotei '+n+(n>1?' itens':' item')+'. Que mais?':'Não peguei nenhum valor aí. Fala de novo com o valor?',terminou:false};
-}
-async function applyCallResult(r){
-  const c=S.call,base=callLists(),undo={lists:JSON.parse(JSON.stringify(base)),gids:[],dg:(c.draftGastos||[]).length};
-  const {p,lines}=applyActions(r.acts,base);
-  if(lines.some(l=>l.op!=='?'))await setCallLists(p);
-  for(const g of r.gastos){const rec=recFrom(g,'');
-    if(c.mode==='intro')(c.draftGastos=c.draftGastos||[]).push(rec);else{await addGasto(rec);undo.gids.push(S.gastos[0].id)}
-    lines.push({op:'+',txt:rec.descricao+' · '+(rec.parcelas>1?rec.parcelas+'x de '+brl(rec.valor_total/rec.parcelas):brl(rec.valor_total))+(rec.entrada?' · entrada':' · '+rec.categoria)})}
-  return {lines,undo};
-}
-async function processQueue(){
-  const c=S.call;if(!c||c.busy)return;
-  const batch=c.log.filter(e=>e.who==='eu'&&e.pend);if(!batch.length)return;
-  c.busy=true;c.retry=false;updateCall();
-  let r=null;try{r=await callAI(batch.map(e=>e.text))}catch(e){r=null}
-  if(S.call!==c)return;
-  if(!r){c.busy=false;c.retry=true;const t='Caiu a linha um segundo. Toca em tentar de novo, eu não perdi o que você falou.';c.log.push({who:'ir',text:t,local:true});await saveCall();updateCall();scrollEnd();speak(t);return}
-  let res;try{res=await applyCallResult(r)}catch(e){res={lines:[{op:'?',txt:'Não consegui salvar parte disso agora.'}],undo:null}}
-  batch.forEach(e=>{delete e.pend});
-  c.duvidas=r.duvidas;c.feitos=[...new Set([...(c.feitos||[]),...r.feitos])];if(r.terminou)c.ended=true;c.hangAsk=false;
-  const entry={who:'ir',text:r.resposta,lines:res.lines};c.log.push(entry);
-  S.lastUndo=res.undo&&res.lines.some(l=>l.op!=='?')?{entry,undo:res.undo}:null;
-  c.busy=false;await saveCall();updateCall();scrollEnd();speak(r.resposta);
-  if(c.log.some(e=>e.who==='eu'&&e.pend))processQueue();
-}
-async function sendText(t){const c=S.call;if(!c)return;S.lastUndo=null;
-  const ap=c.mode==='livre'?await tryAporte(t):null;if(ap){c.log.push({who:'eu',text:t});c.log.push({who:'ir',text:ap,local:true});await saveCall();updateCall();scrollEnd();speak(ap);return}
-  const la=c.mode==='livre'?localAnswer(t):null;
-  if(la){c.log.push({who:'eu',text:t});c.log.push({who:'ir',text:la,local:true});await saveCall();updateCall();scrollEnd();speak(la);return}
-  c.log.push({who:'eu',text:t,pend:true});await saveCall();updateCall();scrollEnd();processQueue()}
-async function markPendente(d){const L=JSON.parse(JSON.stringify(callLists())),hit=findItem(L,d.item,'fixas');if(hit){L[hit.k][hit.i].pendente=d.pergunta;await setCallLists(L)}}
-async function resolveDuvida(opt){const c=S.call,d=c&&(c.duvidas||[])[0];if(!d)return;S.lastUndo=null;
-  c.log.push({who:'eu',text:opt});
-  if(/^depois/i.test(opt))await markPendente(d);
-  else{const L=JSON.parse(JSON.stringify(callLists())),hit=findItem(L,d.item,'fixas');let ok=false;
-    if(hit){const x=L[hit.k][hit.i],ym=ymOf(NOW()),o=normKey(opt);ok=true;
-      if(d.campo==='tipo'){const to={fixa:'fixas',variavel:'variaveis',parcela:'parcelas',renda:'renda'}[o];
-        if(!to)ok=false;else if(to!==hit.k){L[hit.k].splice(hit.i,1);const it={nome:x.nome,valor:x.valor};if(to==='parcelas'){it.restantes=x.restantes||1;it.base=ym;it.cartao=x.cartao||'Outro'}else it.dia=x.dia||null;L[to].push(it)}else delete x.pendente}
-      else if(d.campo==='restantes'){const n=parseInt(opt,10);if(n>0){x.restantes=n;x.base=ym;delete x.pendente}else ok=false}
-      else if(d.campo==='cartao'){x.cartao=CARDS.includes(opt)?opt:'Outro';delete x.pendente}
-      else if(d.campo==='dia'){const n=parseInt(opt,10);if(n>0&&n<=31){x.dia=n;delete x.pendente}else ok=false}
-      else if(d.campo==='valor'){const v=firstNum(opt);if(v>0){x.valor=v;delete x.pendente}else ok=false}
-      else if(d.campo==='duplicado'){if(/uma so|mesma|repeti|apaga|remov/.test(o)){const n=normKey(x.nome),idx=[];L[hit.k].forEach((y,i)=>{if(normKey(y.nome)===n)idx.push(i)});if(idx.length>1)L[hit.k].splice(idx[idx.length-1],1)}delete x.pendente}
-      else ok=false;
-      if(ok)await setCallLists(L)}
-    if(!ok){c.log[c.log.length-1].pend=true;c.duvidas.shift();await saveCall();updateCall();scrollEnd();return processQueue()}}
-  c.duvidas.shift();
-  const nx=c.duvidas[0],t=nx?nx.pergunta:['Anotado. Pode continuar.','Fechado. Que mais?','Beleza, anotei. Pode seguir.'][c.log.length%3];
-  c.log.push({who:'ir',text:t,local:true});await saveCall();updateCall();scrollEnd();speak(t)}
-async function undoLast(){const u=S.lastUndo,c=S.call;if(!u||!c)return;
-  try{await setCallLists(u.undo.lists);for(const id of u.undo.gids)await delGasto(id);if(c.mode==='intro'&&c.draftGastos)c.draftGastos.length=u.undo.dg;u.entry.undone=true;S.lastUndo=null;await saveCall();toast('Desfeito.')}
-  catch(e){toast('Não consegui desfazer agora.')}updateCall()}
-function localAnswer(t){if(t.length>110)return null;const l=normKey(t);
-  if(!/^(quanto|quantos|quais|qual|onde|cabe|posso|consigo|da pra|como)\b/.test(l)&&!/\?\s*$/.test(t))return null;
-  const m=month();
-  if(/\b(cabe|posso comprar|consigo comprar|da pra comprar)\b/.test(l)){
-    let n=1,parc=0;const a=t.match(/(\d+)\s*x\s*de\s*(?:r\$\s*)?(\d[\d.,]*)/i);
-    if(a){n=+a[1];parc=num(a[2])}else{const b=t.match(/(\d+)\s*(?:x|vezes)\b/i);if(b)n=+b[1];const v=firstNum(t.replace(/(\d+)\s*(?:x|vezes)\b/gi,' '));if(!v)return null;parc=v/Math.max(1,n)}
-    const after=m.livre-parc,comp=m.entra>0?Math.round((m.fixas+m.parc+parc)/m.entra*100):0,q=n>1?n+'x de '+brl(parc):brl(parc);
-    if(after<0)return 'Agora não cabe: '+q+' passa do seu livre deste mês, que é '+brl(m.livre)+'.';
-    return (comp>70?'Cabe, mas aperta. ':'Cabe. ')+q+' deixa '+brl(after)+' livres neste mês, e '+comp+'% do que entra passa a ter dono.'}
-  if(/parcela/.test(l)&&/(acab|termin)/.test(l)){const ap=activeParcelas(0).sort((a,b)=>a.rest-b.rest).slice(0,3);if(!ap.length)return 'Você não tem parcela ativa.';const now=NOW();
-    return 'As próximas a acabar: '+ap.map(p=>{const e=new Date(now.getFullYear(),now.getMonth()+p.rest-1,1);return p.nome+' em '+MES[e.getMonth()]}).join(', ')+'.'}
-  if(/(gastando mais|gasto mais|maior gasto|onde.*gast)/.test(l)){const cat={};m.gm.filter(g=>!g.entrada).forEach(g=>{const v=g.parcelas>1?g.valor_total/g.parcelas:g.valor_total;cat[g.categoria]=(cat[g.categoria]||0)+v});
-    const top=Object.entries(cat).sort((a,b)=>b[1]-a[1]).slice(0,3);if(!top.length)return 'Ainda não tem gasto lançado este mês.';
-    return 'Este mês o que mais pesa é '+top.map(([c2,v])=>c2+' ('+brl(v)+')').join(', ')+'.'}
-  if(/quanto.*(posso gastar|da pra gastar|sobra|tenho livre|livre)|por dia/.test(l))return greeting();
-  return null}
-function startCall(mode){const P=prof(),has=[P.renda,P.fixas,P.variaveis,P.parcelas].some(a=>a.length);
-  const t=mode==='intro'?(has?'Oi de novo! Já tenho seu mês anotado. Me conta o que mudou: conta nova, parcela que acabou, valor da obra deste mês.':'Oi! Aqui é o Irineu. Bora montar seu mês? Começa me contando quanto entra: salário, freela, o que cair na conta. Pode abrir o app do banco que eu fico na linha.'):TONS[tom()].alo;
-  S.call={mode,log:[{who:'ir',text:t}],draft:mode==='intro'?JSON.parse(JSON.stringify({renda:P.renda,fixas:P.fixas,variaveis:P.variaveis,parcelas:P.parcelas})):{renda:[],fixas:[],variaveis:[],parcelas:[]},
-    draftGastos:[],started:Date.now(),voz:true,duvidas:[],feitos:[],busy:false};
-  S.mode='call';S.callText='';S.lastUndo=null;saveCall();render();scrollEnd();speak(t);if(SR){MICST.target='call';MICST.on=true;MICST.fails=0;micUI();listen()}else focusNow('#calltxt')}
-async function hangUp(){const c=S.call;if(!c)return;
-  if((c.duvidas||[]).length&&!c.hangAsk){c.hangAsk=true;const t='Antes de desligar: '+c.duvidas[0].pergunta+' Se preferir, toca em desligar de novo que eu deixo marcado pra depois.';
-    c.log.push({who:'ir',text:t,local:true});await saveCall();updateCall();scrollEnd();speak(t);return}
-  try{speechSynthesis.cancel()}catch(e){}micStop();
-  for(const d of (c.duvidas||[]))await markPendente(d);c.duvidas=[];c.hangAsk=false;
-  if(c.mode==='intro'){await saveCall();S.draft=JSON.parse(JSON.stringify(c.draft));S.mode='ob';S.ob=4;render();window.scrollTo(0,0);return}
-  S.call=null;await clearCall();S.mode='app';S.tab='home';render();window.scrollTo(0,0);toast('Ligação encerrada. Tudo anotado.')}
-
-function linesHtml(e,i){if(!e.lines||!e.lines.length)return '';
-  const n=o=>e.lines.filter(l=>l.op===o).length,parts=[];
-  if(n('+'))parts.push('+'+n('+')+(n('+')>1?' anotados':' anotado'));if(n('~'))parts.push(n('~')+(n('~')>1?' atualizados':' atualizado'));
-  if(n('−'))parts.push(n('−')+(n('−')>1?' removidos':' removido'));if(n('?'))parts.push(n('?')+' não achei');
-  let h='<div class="anotrow"><button class="anotchip" data-act="callLines" data-keep="1" data-arg="'+i+'" aria-expanded="'+!!e.open+'">'+parts.join(' · ')+'</button>'+
-    (e.undone?'<span class="sub" style="font-size:12px">desfeito</span>':(S.lastUndo&&S.lastUndo.entry===e?'<button class="link" style="min-height:32px;font-size:13px" data-act="callUndo" data-keep="1">Desfazer</button>':''))+'</div>';
-  if(e.open)h+='<div class="anotl">'+e.lines.map(l=>'<div class="opl"><span class="op op'+({'+':'a','~':'u','−':'r','?':'q'}[l.op]||'q')+'">'+l.op+'</span><span>'+esc(l.txt)+'</span></div>').join('')+'</div>';
-  return h}
-function viewCall(){
-  return '<div id="callroot"><div class="wrap callwrap"><div class="callhead" id="call-head"></div><div class="sec" id="call-top" style="gap:10px"></div><div class="chat" id="call-log"></div></div>'+
-  '<div class="dock"><div class="dock-in"><div id="call-cap" class="sec" style="gap:10px"></div>'+
-  '<div class="ask">'+(SR?'<button class="micbtn" id="call-mic" data-act="micToggle" data-keep="1" aria-label="Falar com o Irineu">'+MICBIG+'</button>':'')+'<textarea id="calltxt" data-bind="callText" rows="1" placeholder="Fala com o Irineu" aria-label="Sua fala">'+esc(S.callText)+'</textarea>'+
-  '<button class="btn pri" id="call-send" data-act="callSend" data-keep="1" aria-label="Mandar pro Irineu">'+SEND+'</button></div>'+
-  '<div class="tipline">'+MIC+'<span>'+(SR?'Fala normalmente: quando você pausa, ele anota. Toque no microfone pra pausar.':'Toque no microfone do teclado e fale. Pode mandar outra fala sem esperar a resposta.')+'</span></div></div></div><div id="call-ov"></div></div>';
-}
-function updateCall(){
-  const c=S.call;if(!c)return;if(!$('#call-head')){$('#app').innerHTML=viewCall()}
-  const spk=c.voz===false?'<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/>':'<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>';
-  $('#call-head').innerHTML='<span class="ava'+(c.busy?' talk':'')+'" aria-hidden="true">i<b>.</b></span><div class="txt"><strong>Irineu</strong><small><span class="live"></span><span id="call-st">'+statusText()+'</span> · <span id="calltime">'+mmss(Date.now()-c.started)+'</span></small></div>'+
-    '<button class="iconbtn" aria-label="'+(c.voz===false?'Ligar a voz do Irineu':'Desligar a voz do Irineu')+'" data-act="callVoz"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+spk+'</svg></button>'+
-    (c.mode==='livre'?'<button class="iconbtn" aria-label="Minimizar a ligação" data-act="callMin">'+DOWN+'</button>':'')+
-    '<button class="hang'+(c.ended?' pulse':'')+'" aria-label="Desligar" data-act="callHang">'+PHONE+'</button>';
-  const L=callLists(),KS=[['renda','Renda'],['fixas','Fixas'],['variaveis','Variáveis'],['parcelas','Parcelas']],dq=new Set((c.duvidas||[]).map(d=>normKey(d.item)));
-  let top='';
-  if(c.mode==='intro')top+='<div class="roteiro" aria-label="Roteiro da ligação">'+checkState().map(x=>'<span class="'+(x.ok?'ok':'')+'">'+(x.ok?CHK:'')+esc(x.l)+'</span>').join('')+'</div>';
-  top+='<button class="anot" data-act="callList" aria-expanded="'+!!c.showList+'">'+KS.map(([k,l])=>'<span><small>'+l+(L[k].length?' · '+L[k].length:'')+'</small><b>R$ '+Math.round(itemsTotal(L[k])).toLocaleString('pt-BR')+'</b></span>').join('')+'</button>';
-  if(c.showList){const any=KS.some(([k])=>L[k].length);
-    top+='<div class="card" style="padding:4px 16px">'+(any?KS.map(([k,l])=>L[k].length?'<div class="eyebrow" style="padding:12px 0 2px">'+l+'</div>'+L[k].map((x,i)=>{const q=x.pendente||dq.has(normKey(x.nome));
-      return '<button class="row rowbtn" data-act="editOpen" data-arg="call:'+k+':'+i+'"><span class="txt"><strong>'+esc(x.nome)+'</strong><small>'+esc(k==='parcelas'?(x.cartao||'Outro')+' · faltam '+Math.max(1,restOf(x)):x.dia?'dia '+x.dia:k==='variaveis'?'valor deste mês':'mensal')+'</small></span>'+
-        (q?'<span class="qb" aria-label="Com dúvida">?</span>':'')+'<span class="val">'+brl(x.valor)+'</span></button>'}).join(''):'').join(''):'<p class="empty">Nada anotado ainda.</p>')+'</div>'}
-  $('#call-top').innerHTML=top;
-  let li=-1;for(let i=c.log.length-1;i>=0;i--)if(c.log[i].who==='ir'){li=i;break}
-  if(CALLSEEN>c.log.length)CALLSEEN=0;
-  $('#call-log').innerHTML=c.log.map((e,i)=>i===li?'':e.who==='eu'?'<div class="bubble me'+(e.pend?' pend':'')+(CALLSEEN>=0&&i>=CALLSEEN?' new':'')+'">'+esc(e.text)+(e.pend?'<small class="pendl">'+(c.busy?'anotando…':'na fila')+'</small>':'')+'</div>':
-    '<div class="bubble ir small'+(CALLSEEN>=0&&i>=CALLSEEN?' new':'')+'">'+esc(e.text)+linesHtml(e,i)+'</div>').join('');
-  const capNew=!RM.matches&&CAPSEEN>=0&&li!==CAPSEEN;CALLSEEN=RM.matches?-1:c.log.length;CAPSEEN=li;
-  const cap=li>=0?c.log[li]:null;let ch='';
-  if(cap)ch+='<div class="cap'+(c.busy?' dim':'')+(capNew?' new':'')+'"><p>'+esc(cap.text)+'</p>'+linesHtml(cap,li)+'</div>';
-  if(c.busy)ch+='<span class="thinking" style="font-size:13px">Anotando o que você falou…</span>';
-  else{const d=(c.duvidas||[])[0];
-    if(d&&d.opcoes.length&&d.campo!=='outro')ch+='<div class="qr">'+d.opcoes.map(o=>'<button class="qchip" data-act="callAns" data-keep="1" data-arg="'+esc(o)+'">'+esc(o)+'</button>').join('')+'<button class="qchip ghost" data-act="callAns" data-keep="1" data-arg="Depois eu vejo">Depois eu vejo</button></div>';
-    else if(c.retry)ch+='<div class="qr"><button class="qchip" data-act="callRetry" data-keep="1">Tentar de novo</button></div>';
-    else if(c.mode==='livre'&&c.log.length<=2)ch+='<div class="qr">'+QUICKQ.map(q=>'<button class="qchip ghost" data-act="callQuick" data-keep="1" data-arg="'+esc(q)+'">'+q+'</button>').join('')+'</div>';}
-  $('#call-cap').innerHTML=ch;
-  const ov=$('#call-ov'),ok=S.edit?JSON.stringify([S.edit.k,S.edit.i,S.edit.d.key,S.err,S.editSure]):'';
-  if(ov.dataset.k!==ok){ov.dataset.k=ok;ov.innerHTML=S.edit?viewEdit():''}
-  fitDock();micUI();
-}
+/* ---------- ligação (removida na versão 5; restos guardados só pra limpar dados antigos) ---------- */
+function callLists(){return prof()}
+async function setCallLists(p){return saveProfile({...prof(),...p})}
+async function saveCall(){}
+async function clearCall(){try{localStorage.removeItem('irineu_call');localStorage.removeItem('irineu_calltxt')}catch(e){}}
+function fitDock(){}
 
 /* ---------- telas ---------- */
 function tipHtml(){return '<div class="tip">'+MIC+'<span>Toque no microfone do teclado do celular e fale. Se preferir, digite.</span></div>'}
@@ -848,10 +695,9 @@ function viewOb(){
     '<span class="badge" aria-hidden="true"><svg class="ring" viewBox="0 0 116 116"><defs><path id="bp" d="M58,58 m-43,0 a43,43 0 1,1 86,0 a43,43 0 1,1 -86,0"/></defs><text font-family="Manrope,sans-serif" font-size="11.5" font-weight="700" letter-spacing="2.2" fill="#111113"><textPath href="#bp">O IRINEU SABE • O IRINEU SABE • </textPath></text></svg>'+
     '<span style="font-family:var(--display);font-weight:700;font-size:30px;letter-spacing:-.04em">i<span style="color:var(--violet)">.</span></span></span></div>'+
     '<div class="sec" style="gap:22px"><h1 class="h1" style="font-size:clamp(46px,14vw,64px)">Prazer, eu sou o <span class="pill-word">Irineu</span>.</h1>'+
-    '<p style="font-size:17px;margin:0;color:rgba(255,255,255,.82)">Bora numa ligação: você me conta seus gastos do jeito que lembrar, eu vou anotando e pergunto o que não entender. Pode abrir o app do banco no meio que eu fico na linha.</p>'+
+    '<p style="font-size:17px;margin:0;color:rgba(255,255,255,.82)">Em 3 passos você me conta quanto entra, o que é fixo e o que está parcelado. Depois é só mandar áudio dos gastos que eu anoto e organizo tudo.</p>'+
     '<div class="tilt"><span>Quanto entra</span><span>O que é fixo e o que varia</span><span>O que está parcelado</span></div></div>'+
-    '<div class="sec" style="gap:6px"><button class="btn pri go" data-act="callStart">Ligar pro Irineu<span class="arw">'+PHONE+'</span></button>'+
-    '<button class="link" style="color:#fff;text-align:center" data-act="obStart">Prefiro responder em 3 etapas</button>'+(getKey()?'':'<button class="link" style="color:#fff;text-align:center" data-act="setupOpen">Colar a chave da IA e trazer meus dados</button>')+'</div></div></div>';
+    '<div class="sec" style="gap:6px"><button class="btn pri go" data-act="obStart">Começar<span class="arw">'+ARW+'</span></button>'+(getKey()?'':'<button class="link" style="color:#fff;text-align:center" data-act="setupOpen">Colar a chave da IA e trazer meus dados</button>')+'</div></div></div>';
   }
   if(S.ob<=3){
     const st=STEPS[S.ob-1];
@@ -878,7 +724,7 @@ function viewOb(){
   }
   const d=S.draft,R=itemsTotal(d.renda),F=itemsTotal(d.fixas)+itemsTotal(d.variaveis),P=itemsTotal(d.parcelas),L=R-F-P;
   const pct=R>0?Math.round((F+P)/R*100):0,dim=new Date(NOW().getFullYear(),NOW().getMonth()+1,0).getDate();
-  const msg=R<=0?'Sem renda informada eu não consigo calcular quanto sobra. Dá pra voltar pra ligação e me contar.':
+  const msg=R<=0?'Sem renda informada eu não consigo calcular quanto sobra. Dá pra voltar e me contar.':
     pct<=50?pct+'% do que entra já tem dono. Tá saudável. Se passar de 60%, eu te aviso antes de você parcelar mais alguma coisa.':
     pct<=70?pct+'% do que entra já tem dono. Dá pra viver, mas eu vou ficar de olho antes de você parcelar mais.':
     pct+'% do que entra já tem dono. Tá apertado. Antes de qualquer parcela nova, me pergunta se cabe.';
@@ -892,11 +738,10 @@ function viewOb(){
       '<div class="row"><span class="dot" style="background:var(--fg)"></span><div class="txt"><strong>Contas fixas e variáveis</strong></div><span class="val">'+brl(-F)+'</span></div>'+
       '<div class="row"><span class="dot" style="background:var(--accent)"></span><div class="txt"><strong>Parcelas</strong></div><span class="val">'+brl(-P)+'</span></div>'+
       (dg.length?'<div class="row"><div class="txt"><strong>Gastos contados na ligação</strong><small>'+dg.length+(dg.length>1?' lançamentos entram':' lançamento entra')+' no Início</small></div><span class="val">'+brl(dg.reduce((a,g)=>a+(g.entrada?0:g.valor_total),0))+'</span></div>':'')+'</div>'+
-    (np?'<div class="qnote"><b>'+np+(np>1?' dúvidas ficaram':' dúvida ficou')+' pra depois.</b> Elas aparecem com <span class="qb">?</span> na aba Contas.</div>':'')+
+    '<button class="link" data-act="obBack">Voltar e corrigir</button>'+
     '<div class="bubble ir" style="max-width:100%">'+esc(msg)+'</div>'+
     '<div class="sec" style="gap:8px"><span class="sub">Como você quer que eu fale com você? Dá pra trocar depois.</span><div class="tons" role="radiogroup" aria-label="Jeito do Irineu">'+
     Object.keys(TONS).map(k=>'<button role="radio" aria-checked="'+(S.obTom===k)+'" class="'+(S.obTom===k?'on':'')+'" data-act="obTom" data-arg="'+k+'">'+TONS[k].nome+'</button>').join('')+'</div></div>'+
-    (S.call?'<button class="link" data-act="callResume">Voltar pra ligação e corrigir algo</button>':'')+
     '<button class="btn pri" data-act="obFinish" '+(S.busy?'disabled':'')+'>'+(S.busy?'Salvando…':'Fechou, Irineu')+'</button></div>';
 }
 
@@ -934,12 +779,10 @@ function viewDestinos(off){const d=destinos(off),ym=ymOf(NOW())+off;if(!d.lista.
     '<div class="list">'+d.lista.map(x=>'<div class="drow"><i style="background:'+x.cor+'"></i><span class="dn">'+esc(x.nome)+'</span><span class="dp">'+(d.entra>0?Math.round(x.valor/d.entra*100)+'%':'')+'</span><b>'+brl(x.valor)+'</b></div>').join('')+'</div>'+
     (d.livre<0?'<p class="sub" style="margin:0;color:var(--warn)">Passa do que entra em '+brl(-d.livre)+'.</p>':'')+'</section>'}
 function viewHome(){
-  const now=NOW(),ym0=ymOf(now),so=startOff(),off=S.pv==null?so:S.pv,ymv=ym0+off,m=month();
+  const now=NOW(),ym0=ymOf(now),off=offOf(),ymv=ym0+off,m=month();
   const list=(off>0?S.gastos.filter(g=>g.ym===ymv):m.gm).slice().sort((a,b)=>b.ts-a.ts);
   const E=Math.max(m.entra,1),w=v=>Math.max(0,Math.min(100,v/E*100)).toFixed(2)+'%';
-  const seg='<div class="tons" style="grid-template-columns:repeat(2,minmax(0,1fr))" role="radiogroup" aria-label="Qual mês ver">'+
-    '<button role="radio" aria-checked="'+(off===0)+'" class="'+(off===0?'on':'')+'" data-act="pvSet" data-arg="0">Este mês</button>'+
-    '<button role="radio" aria-checked="'+(off===1)+'" class="'+(off===1?'on':'')+'" data-act="pvSet" data-arg="1">Mês que vem</button></div>';
+  const seg=monthStrip(off);
   let card;
   if(off>0){const pv=monthAt(off),dim=new Date(Math.floor(ymv/12),ymv%12+1,0).getDate(),pct=pv.entra>0?Math.round(pv.comp/pv.entra*100):0;
     card='<section class="lime-card'+(pv.livre<0?' neg':'')+'"><div class="top"><span class="chip-date">Prévia</span></div>'+
@@ -959,14 +802,14 @@ function viewHome(){
     '<div><small>Por dia</small><strong>'+(m.livre>0?brl(m.perDay):'R$ 0,00')+'</strong></div></div>'+
     (m.guardado>0?'<span class="sub" style="font-size:12px">O livre já desconta os '+brl(m.guardado)+' que você guardou nas metas.</span>':'')+'</section>';
   return '<div class="wrap">'+
-  (S.call?'<button class="callbar" data-act="callOpen"><span class="live"></span>Ligação em aberto com o Irineu<b>Voltar</b></button>':'')+
   '<div class="top"><div style="display:flex;flex-direction:column;gap:2px"><span class="sub">'+(['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][now.getDay()])+', '+now.getDate()+' de '+MES[now.getMonth()]+'</span><span class="mark">irineu<i>.</i></span></div>'+
-    '<button class="iconbtn" aria-label="Ligar pro Irineu" data-act="callOpen">'+PHONE+'</button></div>'+
+    '<button class="iconbtn" aria-label="Mandar áudio de um gasto" data-act="openSheet">'+MICBIG.replace(/26/g,'20')+'</button></div>'+
   '<h1 class="h1">'+(off>0?'Prévia de<br>'+MES[ymv%12]:'Seu mês<br>de '+MES[now.getMonth()])+'</h1>'+seg+card+
   (off===0&&S.profile?'<div class="bubble ir" style="max-width:100%">'+esc(greeting())+'</div>':'')+
   viewDestinos(off)+viewTermo(off)+
+  '<button class="callbar" data-act="tab" data-arg="parc">Ver os cartões de '+MES[ymv%12]+'<b>Contas →</b></button>'+
   '<section class="sec" style="gap:0"><div class="sec-h"><h2>'+(off>0?'Previstos':'Lançamentos')+'</h2><span class="sub">'+list.length+' em '+MES[ymv%12]+'</span></div><div class="list">'+
-    (list.length?listByDay(list):'<p class="empty">'+(off>0?'Nada previsto pra '+MES[ymv%12]+'. Dá pra adicionar na aba Contas.':'Nada lançado ainda. Toque no microfone verde e conta pro Irineu o que você gastou.')+'</p>')+
+    (list.length?listByDay(list):'<p class="empty">'+(off>0?'Nenhum gasto avulso previsto pra '+MES[ymv%12]+'. As parcelas e contas desse mês estão na aba Contas.':'Nada lançado ainda. Toque no microfone verde e conta pro Irineu o que você gastou.')+'</p>')+
   '</div></section></div>';
 }
 function viewTermo(sel){
@@ -978,32 +821,6 @@ function viewTermo(sel){
     '<div class="tgrid">'+it.map(x=>'<button class="tcol'+(x.o===sel?' sel':'')+'" data-act="pvSet" data-arg="'+x.o+'" aria-label="Ver '+MES[x.ym%12]+': '+x.pct+'% comprometido, '+x.c.nome+'"><span class="tpct">'+(x.entra>0?x.pct+'%':'–')+'</span><span class="ttube"><span style="height:'+Math.max(4,Math.min(100,x.pct))+'%;background:'+x.c.cor+'"></span></span><b>'+MES3[x.ym%12]+'</b><small>'+x.c.nome+'</small></button>').join('')+'</div>'+
     (msg.length?'<p class="sub" style="margin:0;color:var(--fg)">'+msg.join(' ')+'</p>':'')+
     '<p class="sub" style="margin:0;font-size:12px">Toque num mês pra ver a prévia dele. O mês atual inclui o que você já gastou.</p></section>';
-}
-function viewParc(){
-  const p=prof(),now=NOW(),F=sumAt(p.fixas,ymOf(now)),V=sumAt(p.variaveis,ymOf(now));
-  const pp=p.parcelas.map((x,i)=>({...x,i,rest:x.desde&&x.desde>ymOf(now)?x.restantes:restOf(x)})).filter(x=>x.rest>=1);
-  const voz=activeParcelas(0).filter(x=>x.origem==='voz');
-  const P=pp.reduce((a,x)=>a+x.valor,0)+voz.reduce((a,x)=>a+x.valor,0),T=F+V+P,w=v=>(T>0?v/T*100:0).toFixed(2)+'%';
-  const endTxt=r=>{const e=new Date(now.getFullYear(),now.getMonth()+r-1,1);return r===1?'última este mês':'faltam '+r+' · até '+MES3[e.getMonth()]};
-  const addBtn=k=>'<button class="pilllink" data-act="editNew" data-arg="'+k+'">+ adicionar</button>';
-  const row=(k,x,i,meta)=>'<button class="row rowbtn" data-act="editOpen" data-arg="'+k+':'+i+'">'+(k==='parcelas'?avatar(x.cartao):'')+'<span class="txt"><strong>'+esc(x.nome)+'</strong><small>'+esc(x.pendente?'Dúvida: '+x.pendente:meta+(k!=='parcelas'&&x.desde&&x.desde>ymOf(now)?' · a partir de '+ymLabel(x.desde):'')+(x.fim?(x.fim<ymOf(now)?' · acabou':' · até '+ymLabel(x.fim)):''))+'</small></span>'+
-    (x.pendente?'<span class="qb" aria-label="Com dúvida">?</span>':'')+'<span class="val">'+brl(x.valor)+'</span>'+CHEV+'</button>';
-  const np=[...p.renda,...p.fixas,...p.variaveis,...p.parcelas].filter(x=>x.pendente).length,prev=S.gastos.filter(g=>g.ym>ymOf(now)).sort((a,b)=>a.ts-b.ts);
-  return '<div class="wrap"><h1 class="h1">Contas</h1>'+
-  '<section class="violet-panel" style="gap:10px"><span style="font-size:13px;font-weight:700">Já tem dono todo mês</span><span class="big" style="font-size:clamp(46px,14vw,60px)">'+brl(T)+'</span>'+
-    '<div class="bar" style="height:22px;background:rgba(255,255,255,.16)">'+(F>0?'<span style="width:'+w(F)+';background:#fff"></span>':'')+(V>0?'<span style="width:'+w(V)+';background:rgba(255,255,255,.5)"></span>':'')+(P>0?'<span style="width:'+w(P)+';background:repeating-linear-gradient(-45deg,var(--lime) 0 7px,#BFDB45 7px 13px)"></span>':'')+'</div>'+
-    '<div class="legend" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div><small><i style="background:#fff"></i>Fixas</small><strong>'+brl(F)+'</strong></div><div><small><i style="background:rgba(255,255,255,.5)"></i>Variáveis</small><strong>'+brl(V)+'</strong></div><div><small><i style="background:var(--lime)"></i>Parcelas</small><strong>'+brl(P)+'</strong></div></div></section>'+
-  (np?'<div class="qnote"><b>'+np+(np>1?' dúvidas':' dúvida')+' do Irineu</b> esperando você. Toca no item com <span class="qb">?</span> pra resolver.</div>':'')+
-  '<button class="btn pri go" data-act="callOpen">Ligar pro Irineu<span class="arw">'+PHONE+'</span></button>'+
-  '<section class="sec" style="gap:4px"><div class="sec-h"><h2>Fixas</h2>'+addBtn('fixas')+'</div><div class="list">'+(p.fixas.length?p.fixas.map((x,i)=>row('fixas',x,i,x.dia?'todo dia '+x.dia:'mesmo valor todo mês')).join(''):'<p class="empty">Aluguel, internet, academia… o que tem o mesmo valor todo mês.</p>')+'</div></section>'+
-  '<section class="sec" style="gap:4px"><div class="sec-h"><h2>Variáveis</h2>'+addBtn('variaveis')+'</div><div class="list">'+(p.variaveis.length?p.variaveis.map((x,i)=>row('variaveis',x,i,'valor de '+MES[now.getMonth()]+' · toque pra atualizar')).join(''):'<p class="empty">Obra, luz, água… o que vem todo mês com valor diferente. Na ligação, fala "a obra esse mês deu 2.300" que eu atualizo.</p>')+'</div></section>'+
-  '<section class="sec" style="gap:4px"><div class="sec-h"><h2>Parcelas</h2>'+addBtn('parcelas')+'</div><div class="list">'+
-    (pp.length||voz.length?pp.sort((a,b)=>b.rest-a.rest).map(x=>row('parcelas',x,x.i,x.cartao+' · '+(x.desde&&x.desde>ymOf(now)?'começa em '+MES[x.desde%12]+' · '+x.restantes+(x.restantes>1?' parcelas':' parcela'):endTxt(x.rest)))).join('')+
-      voz.map(x=>'<div class="row">'+avatar(x.cartao)+'<span class="txt"><strong>'+esc(x.nome)+'</strong><small>'+esc(x.cartao+' · '+endTxt(x.rest)+' · lançada no Início')+'</small></span><span class="val">'+brl(x.valor)+'</span></div>').join('')
-    :'<p class="empty">Nenhuma parcela ativa.</p>')+'</div></section>'+
-  '<section class="sec" style="gap:4px"><div class="sec-h"><h2>Previstos</h2><button class="pilllink" data-act="geditNew">+ adicionar</button></div><div class="list">'+
-    (prev.length?prev.map(g=>'<button class="row rowbtn" data-act="geditOpen" data-arg="'+g.id+'">'+avatar(g.cartao)+'<span class="txt"><strong>'+esc(g.descricao)+'</strong><small>'+esc(MES[g.ym%12]+' · '+g.cartao+(g.parcelas>1?' · '+g.parcelas+'x':''))+'</small></span><span class="val">'+brl(g.valor_total)+'</span>'+CHEV+'</button>').join('')
-    :'<p class="empty">Gastos únicos de um mês futuro, tipo um Pix já combinado. Eles entram no termômetro.</p>')+'</div></section></div>';
 }
 function viewEdit(){
   const e=S.edit,d=e.d,k=d.key,isNew=e.i<0;
@@ -1060,26 +877,6 @@ async function tryAporte(t){const m=t.match(/guardei\s+(?:r\$\s*)?(\d[\d.,]*)\s*
   return addAporte(i,num(m[1]))}
 async function addAporte(i,v){if(!(v>0))return null;const p=JSON.parse(JSON.stringify(prof())),m=p.metas[i];m.aportes=(m.aportes||[]).concat({ym:ymOf(NOW()),valor:v,ts:Date.now()});
   await saveProfile(p);const f=Math.max(0,m.alvo-metaGuardado(m));return 'Guardado: '+brl(v)+' em '+m.nome+'. '+(f>0?'Faltam '+brl(f)+'.':'Meta concluída!')}
-function viewAjustes(){
-  const p=prof();
-  const rows=p.renda.length?p.renda.map((x,i)=>'<button class="row rowbtn" data-act="editOpen" data-arg="renda:'+i+'"><span class="txt"><strong>'+esc(x.nome)+'</strong><small>'+esc(x.pendente?'Dúvida: '+x.pendente:x.dia?'todo dia '+x.dia:'mensal')+'</small></span>'+(x.pendente?'<span class="qb">?</span>':'')+'<span class="val">'+brl(x.valor)+'</span>'+CHEV+'</button>').join(''):'<p class="empty">Nada informado.</p>';
-  return '<div class="wrap"><h1 class="h1">Metas</h1>'+viewMetas()+'<h2 class="sech" style="margin-top:16px">Ajustes</h2>'+
-    '<section class="sec" style="gap:8px"><div class="sec-h"><h2>Cartões</h2></div><div class="qr">'+userCards().map(c=>'<button class="qchip ghost" data-act="cardDel" data-arg="'+esc(c)+'" aria-label="Remover '+esc(c)+'">'+esc(c)+(S.cardSure===c?' · remover?':' ×')+'</button>').join('')+'</div>'+
-    '<div class="ask"><input id="card-new" placeholder="Novo cartão (ex.: Ana)" aria-label="Nome do novo cartão"><button class="btn" data-act="cardAdd">Adicionar</button></div></section>'+
-    '<section class="sec" style="gap:8px"><div class="sec-h"><h2>Jeito do Irineu</h2></div><div class="tons" role="radiogroup" aria-label="Jeito do Irineu">'+
-      Object.keys(TONS).map(k=>'<button role="radio" aria-checked="'+(tom()===k)+'" class="'+(tom()===k?'on':'')+'" data-act="setTom" data-arg="'+k+'">'+TONS[k].nome+'</button>').join('')+'</div></section>'+
-    '<section class="sec" style="gap:4px"><div class="sec-h"><h2>Renda · '+brl(itemsTotal(p.renda))+'</h2><button class="pilllink" data-act="editNew" data-arg="renda">+ adicionar</button></div><div class="list">'+rows+'</div></section>'+
-    '<section class="sec" style="gap:8px"><div class="sec-h"><h2>Inteligência</h2><span class="sub">'+(SAMPLE?'ligada':'desligada')+'</span></div>'+
-    '<p class="sub" style="margin:0">'+(getKey()?'Sua chave da API está salva só neste celular.':'Cole sua chave da API do Claude pra ele entender a conversa. Sem ela, ele usa a leitura simples.')+'</p>'+
-    '<button class="btn" data-act="setupOpen">'+(getKey()?'Trocar ou testar a chave':'Colar minha chave')+'</button></section>'+
-    '<section class="sec" style="gap:8px"><div class="sec-h"><h2>Backup</h2></div><p class="sub" style="margin:0">Seus dados ficam só neste celular. Salva uma cópia de vez em quando.</p>'+
-    '<div class="btns"><button class="btn" data-act="exportFile">Baixar backup</button><button class="btn" data-act="setupOpen" data-arg="import">Importar</button></div></section>'+
-    '<p class="sub" style="margin:0">Contas fixas, variáveis e parcelas ficam na aba <b>Contas</b>.</p>'+
-    '<section class="sec" style="gap:4px"><button class="btn" data-act="redoOb">Refazer introdução</button><span class="sub" style="padding-top:6px">Abre a ligação de introdução de novo, já com o que você tem, pra revisar tudo.</span></section>'+
-    '<section class="sec" style="gap:4px"><button class="link" style="color:var(--warn)" data-act="wipe">'+(S.confirmWipe?'Toque de novo para apagar tudo':'Apagar todos os dados')+'</button>'+
-    '<span class="sub">'+(DB?'Seus dados ficam salvos na sua conta, visíveis só pra você.':'Seus dados ficam salvos só neste celular.')+(SAMPLE?'':' A leitura inteligente está desligada, então uso uma leitura mais simples.')+'</span></section>'+
-    '<p class="sub" style="margin:0;font-size:11px;opacity:.6;text-align:center">Irineu · versão '+VERSAO+'</p></div>';
-}
 function viewSheet(){
   const g=S.pending;
   let h='<div class="sheet" role="dialog" aria-label="Contar gasto"><div class="wrap"><div class="top"><span class="eyebrow acc">'+(g?'Só mais uma coisa':'Novo gasto')+'</span><button class="close" aria-label="Fechar" data-act="closeSheet">'+XI+'</button></div>';
@@ -1115,21 +912,130 @@ function viewGEdit(){
   '<p class="sub" style="margin:0">Mudou a categoria? Da próxima vez que você falar "'+esc(g.descricao)+'", eu já acerto.</p>'+
   '<div class="btns">'+(g.id?'<button class="btn" style="'+(S.gSure?'background:var(--warn);border-color:var(--warn);color:var(--ink)':'color:var(--warn)')+'" data-act="geditDel">'+(S.gSure?'Confirmar':'Apagar')+'</button>':'<button class="btn" data-act="geditClose">Cancelar</button>')+'<button class="btn pri" data-act="geditSave">Salvar</button></div></div></div>';
 }
-const NAV=[['home','Início','<path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/>','tab'],['parc','Contas','<rect x="3" y="5" width="18" height="15" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>','tab'],null,
-  ['irineu','Irineu','<path d="M4 5h16v11H9l-5 4z"/>','callOpen'],['ajustes','Metas','<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".6"/>','tab']];
+
+/* ---------- meses: faixa compartilhada por Início e Contas ---------- */
+function offOf(){return S.pv==null?startOff():S.pv}
+function monthStrip(sel){let h='<div class="mstrip" role="tablist" aria-label="Escolher o mês">';
+  for(let o=0;o<12;o++){const ym=ymOf(NOW())+o,x=monthAt(o),pct=x.entra>0?Math.round(x.comp/x.entra*100):0,c=climaOf(pct,x.entra),y=Math.floor(ym/12);
+    h+='<button role="tab" aria-selected="'+(o===sel)+'" class="mchip'+(o===sel?' on':'')+'" data-act="pvSet" data-arg="'+o+'" aria-label="'+MES[ym%12]+' de '+y+', '+c.nome+'"><i style="background:'+c.cor+'"></i><b>'+MES3[ym%12]+'</b><small>'+(o===0?'agora':ym%12===0?String(y):'')+'</small></button>'}
+  return h+'</div>'}
+function centerStrip(){document.querySelectorAll('.mstrip').forEach(st=>{const on=st.querySelector('.on');if(on)st.scrollLeft=on.offsetLeft-st.clientWidth/2+on.clientWidth/2})}
+
+/* ---------- Contas: o que sai em cada mês, por cartão ---------- */
+function contasAt(off){const ym=ymOf(NOW())+off,p=prof(),groups={};
+  const G=k=>groups[k]||(groups[k]={key:k,itens:[],tot:0});
+  const push=(k,it)=>{const g=G(k);g.itens.push(it);g.tot+=it.valor};
+  p.parcelas.forEach((x,i)=>{const r=x.restantes-(ym-x.base);if(r>=1&&!(x.desde&&ym<x.desde))
+    push(x.cartao||'Outro',{nome:x.nome,valor:x.valor,meta:r===1?'última parcela':'faltam '+r+' · até '+MES3[(ym+r-1)%12],act:'editOpen',arg:'parcelas:'+i,q:!!x.pendente})});
+  S.gastos.forEach(g=>{if(g.entrada)return;
+    if(g.parcelas>1){const k=ym-g.ym+1;if(k>=1&&k<=g.parcelas)push(g.cartao||'Outro',{nome:g.descricao,valor:g.valor_total/g.parcelas,meta:'parcela '+k+' de '+g.parcelas,act:'geditOpen',arg:g.id});return}
+    if(g.ym!==ym)return;
+    const cred=g.forma==='crédito'&&g.cartao!=='Dinheiro';
+    push(cred?(g.cartao||'Outro'):'Pix e débito',{nome:g.descricao,valor:g.valor_total,meta:(off>0?'previsto':dayLabel(g.ts))+(cred?'':' · '+g.forma+(g.cartao&&g.cartao!=='Outro'?' · '+g.cartao:'')),act:'geditOpen',arg:g.id})});
+  const list=Object.values(groups).sort((a,b)=>(a.key==='Pix e débito')-(b.key==='Pix e débito')||b.tot-a.tot);
+  const fixas=p.fixas.map((x,i)=>({...x,i})).filter(x=>ativo(x,ym)),vars=p.variaveis.map((x,i)=>({...x,i})).filter(x=>ativo(x,ym));
+  return {ym,list,fixas,vars,F:itemsTotal(fixas),V:itemsTotal(vars),C:list.reduce((a,g)=>a+g.tot,0)}}
+function viewContas(){
+  const off=offOf(),c=contasAt(off),ym=c.ym,T=c.F+c.V+c.C,w=v=>(T>0?v/T*100:0).toFixed(2)+'%',p=prof();
+  const np=[...p.renda,...p.fixas,...p.variaveis,...p.parcelas].filter(x=>x.pendente).length;
+  const row=(k,x,meta)=>'<button class="row rowbtn" data-act="editOpen" data-arg="'+k+':'+x.i+'"><span class="txt"><strong>'+esc(x.nome)+'</strong><small>'+esc(x.pendente?'Dúvida: '+x.pendente:meta+(x.fim?' · até '+ymLabel(x.fim):''))+'</small></span>'+
+    (x.pendente?'<span class="qb" aria-label="Com dúvida">?</span>':'')+'<span class="val">'+brl(x.valor)+'</span>'+CHEV+'</button>';
+  const fat=g=>{const open=S.fatOpen.has(g.key),nome=g.key==='Outro'?'Outros cartões':g.key==='Pix e débito'?'Pix e débito':'Cartão '+g.key;
+    return '<div class="fat'+(open?' open':'')+'"><button class="fathead" data-act="fatToggle" data-arg="'+esc(g.key)+'" aria-expanded="'+open+'">'+avatar(g.key==='Pix e débito'?'Dinheiro':g.key)+
+      '<span class="txt"><strong>'+esc(nome)+'</strong><small>'+g.itens.length+(g.itens.length>1?' itens':' item')+'</small></span><span class="val">'+brl(g.tot)+'</span><span class="fchev" aria-hidden="true">'+DOWN+'</span></button>'+
+      (open?'<div class="fatbody'+(S.fatJust===g.key?' fresh':'')+'">'+g.itens.sort((a,b)=>b.valor-a.valor).map(it=>'<button class="row rowbtn" data-act="'+it.act+'" data-arg="'+esc(it.arg)+'"><span class="txt"><strong>'+esc(it.nome)+'</strong><small>'+esc(it.meta)+'</small></span>'+(it.q?'<span class="qb">?</span>':'')+'<span class="val">'+brl(it.valor)+'</span>'+CHEV+'</button>').join('')+'</div>':'')+'</div>'};
+  return '<div class="wrap"><h1 class="h1">Contas de<br>'+MES[ym%12]+'</h1>'+monthStrip(off)+
+  '<section class="violet-panel" style="gap:10px"><span style="font-size:13px;font-weight:700">Sai em '+MES[ym%12]+'</span><span class="big" style="font-size:clamp(46px,14vw,60px)">'+brl(T)+'</span>'+
+    '<div class="bar" style="height:22px;background:rgba(255,255,255,.16)">'+(c.F>0?'<span style="width:'+w(c.F)+';background:#fff"></span>':'')+(c.V>0?'<span style="width:'+w(c.V)+';background:rgba(255,255,255,.5)"></span>':'')+(c.C>0?'<span style="width:'+w(c.C)+';background:repeating-linear-gradient(-45deg,var(--lime) 0 7px,#BFDB45 7px 13px)"></span>':'')+'</div>'+
+    '<div class="legend" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div><small><i style="background:#fff"></i>Fixas</small><strong>'+brl(c.F)+'</strong></div><div><small><i style="background:rgba(255,255,255,.5)"></i>Variáveis</small><strong>'+brl(c.V)+'</strong></div><div><small><i style="background:var(--lime)"></i>Cartões e Pix</small><strong>'+brl(c.C)+'</strong></div></div></section>'+
+  (np?'<div class="qnote"><b>'+np+(np>1?' itens com dúvida':' item com dúvida')+'.</b> Toca no que tem <span class="qb">?</span> pra resolver.</div>':'')+
+  '<section class="sec" style="gap:10px"><div class="sec-h"><h2>Cartões e Pix</h2><span style="display:flex;gap:6px"><button class="pilllink" data-act="editNew" data-arg="parcelas">+ parcela</button><button class="pilllink" data-act="geditNew">+ gasto</button></span></div>'+
+    (c.list.length?c.list.map(fat).join(''):'<p class="empty">Nada nos cartões em '+MES[ym%12]+'.</p>')+'</section>'+
+  '<section class="sec" style="gap:4px"><div class="sec-h"><h2>Fixas · '+brl(c.F)+'</h2><button class="pilllink" data-act="editNew" data-arg="fixas">+ adicionar</button></div><div class="list">'+
+    (c.fixas.length?c.fixas.map(x=>row('fixas',x,x.dia?'todo dia '+x.dia:'mesmo valor todo mês')).join(''):'<p class="empty">Aluguel, internet, academia… o que tem o mesmo valor todo mês.</p>')+'</div></section>'+
+  '<section class="sec" style="gap:4px"><div class="sec-h"><h2>Variáveis · '+brl(c.V)+'</h2><button class="pilllink" data-act="editNew" data-arg="variaveis">+ adicionar</button></div><div class="list">'+
+    (c.vars.length?c.vars.map(x=>row('variaveis',x,'valor do mês · toque pra atualizar')).join(''):'<p class="empty">Obra, luz, água… o que vem todo mês com valor diferente.</p>')+'</div></section></div>';
+}
+
+/* ---------- Metas: dá vontade de guardar ---------- */
+const MARCOS=[500,1000,2500,5000,10000,25000,50000,100000,250000,500000];
+const DESEJOS0=[{nome:'Fim de semana na praia',valor:1500},{nome:'Notebook novo',valor:5000},{nome:'Viagem pra fora',valor:12000}];
+function totalGuardado(){return ((S.profile&&S.profile.metas)||[]).reduce((a,m)=>a+metaGuardado(m),0)}
+function custoMensal(){/* o mês mais pesado entre os próximos 3: conta conservadora de quanto custa o seu mês */
+  let c=0;for(let o=0;o<3;o++){const x=monthAt(o);c=Math.max(c,x.comp-guardadoNo(x.ym))}return c}
+function kBRL(v){return v>=1000?'R$ '+(v/1000).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mil':brl(v)}
+function mesesTxt(m){if(m<1){const d=Math.round(m*30);return d+(d===1?' dia':' dias')}const r=Math.round(m*10)/10;return r.toLocaleString('pt-BR')+(r<2?' mês':' meses')}
+function comparativo(tot,custo){
+  const fonte='<span class="fonte">Fonte: Raio X do Investidor Brasileiro, Anbima, 9ª edição (abril de 2026).</span>';
+  if(custo<=0)return '';
+  const m=tot/custo;let big,of,txt;
+  if(tot<=0){big='31%';of='dos brasileiros';txt='não têm nenhum dinheiro guardado. O primeiro real que você guardar já te tira desse grupo.'}
+  else if(m<1){big=String(Math.round(m*30));of=Math.round(m*30)===1?'dia de contas coberto':'dias de contas cobertos';txt='Você já saiu dos <b>31% que não têm reserva nenhuma</b>. Juntando mais <b>'+brl(custo-tot)+'</b>, sua reserva cobre 1 mês e você passa da metade dos brasileiros.'}
+  else if(m<=6){big=(Math.round(m*10)/10).toLocaleString('pt-BR');of=m<2?'mês de contas coberto':'meses de contas cobertos';txt='Você está à frente de <b>mais da metade dos brasileiros</b>: 51% não têm reserva ou ela dura no máximo 1 mês. Com mais <b>'+brl(custo*6-tot)+'</b>, você entra nos 26% que aguentam mais de 6 meses.'}
+  else{big=(Math.round(m*10)/10).toLocaleString('pt-BR');of='meses de contas cobertos';txt='Só <b>26% dos brasileiros</b> aguentam mais de 6 meses sem renda. Você está nesse grupo.'}
+  return '<section class="lime-card"><div class="top"><span class="chip-date">Você e o Brasil</span></div><div class="ratio"><span class="big">'+big+'</span><span class="of">'+of+'</span></div>'+
+    '<p class="sub" style="margin:0">'+txt+'</p>'+fonte+'</section>'}
+function ring(pct,label){const r=46,C=2*Math.PI*r,off=C*(1-Math.max(0,Math.min(1,pct)));
+  return '<svg class="ring2" viewBox="0 0 112 112" aria-hidden="true"><circle cx="56" cy="56" r="'+r+'" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="12"/>'+
+    '<circle class="arc" cx="56" cy="56" r="'+r+'" fill="none" stroke="var(--lime)" stroke-width="12" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" style="--c:'+C.toFixed(1)+'" transform="rotate(-90 56 56)"/>'+
+    '<text x="56" y="62" text-anchor="middle" font-family="Bricolage Grotesque,sans-serif" font-size="22" fill="#fff">'+label+'</text></svg>'}
+function viewMetasPage(){
+  const p=prof(),tot=totalGuardado(),custo=custoMensal(),nx=MARCOS.find(x=>x>tot)||tot,pv=[0,...MARCOS].filter(x=>x<=tot).pop()||0;
+  const pct=nx>pv?(tot-pv)/(nx-pv):1,des=(p.desejos||DESEJOS0).slice().sort((a,b)=>a.valor-b.valor);
+  const prox=MARCOS.filter(x=>x>tot).slice(0,2);
+  const frase=v=>{const parts=[];if(custo>0)parts.push('cobre <b>'+mesesTxt(v/custo)+'</b> das suas contas');const d=des.filter(x=>x.valor<=v).pop();if(d)parts.push('dá pra '+esc(d.nome.charAt(0).toLowerCase()+d.nome.slice(1)));return parts.join(' e ')};
+  return '<div class="wrap"><h1 class="h1">Metas</h1>'+
+  '<section class="violet-panel cofre"><div class="cofre-top"><div style="display:flex;flex-direction:column;gap:6px;min-width:0"><span style="font-size:13px;font-weight:700">Você já guardou</span>'+
+    '<span class="big" style="font-size:clamp(34px,10vw,46px);white-space:nowrap">'+brl(tot)+'</span>'+
+    '<span class="sub">'+(tot>=MARCOS[MARCOS.length-1]?'Todos os marcos batidos.':'Faltam <b style="color:#fff">'+brl(nx-tot)+'</b> pro marco de '+kBRL(nx)+'.')+'</span></div>'+ring(pct,Math.round(pct*100)+'%')+'</div>'+
+    '<button class="btn pri" data-act="'+(p.metas&&p.metas.length?'goGuardar':'metaNew')+'">'+(p.metas&&p.metas.length?'Guardei dinheiro':'Criar minha primeira meta')+'</button></section>'+
+  comparativo(tot,custo)+
+  (prox.length?'<section class="sec" style="gap:10px"><div class="sec-h"><h2>Se você juntar…</h2></div>'+prox.map(v=>'<div class="nextm"><b>'+kBRL(v)+'</b><span>'+frase(v)+'.</span><small>faltam '+brl(v-tot)+'</small></div>').join('')+'</section>':'')+
+  viewMetas()+
+  '<section class="sec" style="gap:10px"><div class="sec-h"><h2>Seus desejos</h2></div>'+
+    des.map(d=>{const ok=tot>=d.valor,i=(p.desejos||DESEJOS0).indexOf(d);return '<div class="wish'+(ok?' ok':'')+'"><div class="sec-h"><strong>'+esc(d.nome)+'</strong><span style="display:flex;gap:8px;align-items:center"><b>'+kBRL(d.valor)+'</b><button class="x" aria-label="Tirar '+esc(d.nome)+'" data-act="wishDel" data-arg="'+(p.desejos?i:'d'+i)+'">'+XI+'</button></span></div>'+
+      '<div class="mbar"><span style="width:'+Math.min(100,d.valor>0?tot/d.valor*100:0).toFixed(1)+'%"></span></div><small>'+(ok?'Seu guardado já cobre. Só não esvazia a reserva!':'faltam '+brl(d.valor-tot))+'</small></div>'}).join('')+
+    (p.desejos?'':'<p class="sub" style="margin:0;font-size:12px">Valores de exemplo, aproximados. Troca pelos seus.</p>')+
+    '<div class="ask"><input id="w-nome" placeholder="Um desejo (ex.: Moto)" aria-label="Nome do desejo"><input id="w-val" inputmode="decimal" placeholder="R$" aria-label="Quanto custa" style="flex:0 0 96px"><button class="btn" data-act="wishAdd">+</button></div></section>'+
+  '<section class="sec" style="gap:10px"><div class="sec-h"><h2>Conquistas</h2><span class="sub">'+MARCOS.filter(x=>x<=tot).length+' de '+MARCOS.length+'</span></div><div class="badges">'+
+    MARCOS.map(x=>'<span class="bdg'+(tot>=x?' on':'')+'">'+(tot>=x?CHK:'')+kBRL(x)+'</span>').join('')+'</div></section></div>'}
+
+/* ---------- Ajustes ---------- */
+function viewConfig(){
+  const p=prof();
+  const rows=p.renda.length?p.renda.map((x,i)=>'<button class="row rowbtn" data-act="editOpen" data-arg="renda:'+i+'"><span class="txt"><strong>'+esc(x.nome)+'</strong><small>'+esc(x.pendente?'Dúvida: '+x.pendente:x.dia?'todo dia '+x.dia:'mensal')+'</small></span>'+(x.pendente?'<span class="qb">?</span>':'')+'<span class="val">'+brl(x.valor)+'</span>'+CHEV+'</button>').join(''):'<p class="empty">Nada informado.</p>';
+  return '<div class="wrap"><h1 class="h1">Ajustes</h1>'+
+    '<section class="sec" style="gap:8px"><div class="sec-h"><h2>Jeito do Irineu</h2></div><div class="tons" role="radiogroup" aria-label="Jeito do Irineu">'+
+      Object.keys(TONS).map(k=>'<button role="radio" aria-checked="'+(tom()===k)+'" class="'+(tom()===k?'on':'')+'" data-act="setTom" data-arg="'+k+'">'+TONS[k].nome+'</button>').join('')+'</div></section>'+
+    '<section class="sec" style="gap:4px"><div class="sec-h"><h2>Renda · '+brl(itemsTotal(p.renda))+'</h2><button class="pilllink" data-act="editNew" data-arg="renda">+ adicionar</button></div><div class="list">'+rows+'</div></section>'+
+    '<section class="sec" style="gap:8px"><div class="sec-h"><h2>Cartões</h2></div><div class="qr">'+userCards().map(c=>'<button class="qchip ghost" data-act="cardDel" data-arg="'+esc(c)+'" aria-label="Remover '+esc(c)+'">'+esc(c)+(S.cardSure===c?' · remover?':' ×')+'</button>').join('')+'</div>'+
+    '<div class="ask"><input id="card-new" placeholder="Novo cartão (ex.: Inter)" aria-label="Nome do novo cartão"><button class="btn" data-act="cardAdd">Adicionar</button></div></section>'+
+    '<section class="sec" style="gap:8px"><div class="sec-h"><h2>Inteligência</h2><span class="sub">'+(SAMPLE?'ligada':'desligada')+'</span></div>'+
+    '<p class="sub" style="margin:0">'+(getKey()?'Sua chave da API está salva só neste celular. Ela só é usada quando a leitura simples não entende o áudio.':'Sem chave, o Irineu usa a leitura simples, que já entende a maioria dos gastos. Com a chave da API do Claude, ele entende frases mais soltas.')+'</p>'+
+    '<button class="btn" data-act="setupOpen">'+(getKey()?'Trocar ou testar a chave':'Colar minha chave')+'</button></section>'+
+    '<section class="sec" style="gap:8px"><div class="sec-h"><h2>Seus dados</h2></div><p class="sub" style="margin:0">Tudo fica só neste celular. Baixa um backup de vez em quando.</p>'+
+    '<div class="btns"><button class="btn" data-act="exportFile">Baixar backup</button><button class="btn" data-act="setupOpen" data-arg="import">Importar</button></div>'+
+    '<div class="tip">'+ARW+'<span><b style="color:var(--fg)">Levar pra outro celular:</b> toque em Baixar backup aqui, mande o arquivo pra você mesmo e, no celular novo, abra o Irineu e use Importar.</span></div></section>'+
+    '<section class="sec" style="gap:4px"><button class="btn" data-act="redoOb">Refazer introdução</button><span class="sub" style="padding-top:6px">Passa de novo pelos 3 passos, já com o que você tem, pra revisar tudo.</span></section>'+
+    '<section class="sec" style="gap:4px"><button class="link" style="color:var(--warn)" data-act="wipe">'+(S.confirmWipe?'Toque de novo para apagar tudo':'Apagar todos os dados')+'</button></section>'+
+    '<p class="sub" style="margin:0;font-size:11px;opacity:.6;text-align:center">Irineu · versão '+VERSAO+'</p></div>'}
+function obEnter(){const st=STEPS[S.ob-1];if(!st){S.obItems=null;return}const l=S.draft[st.key]||[];
+  if(l.length){S.obItems=JSON.parse(JSON.stringify(l));S.obSaid='(o que você já tinha)'}else S.obItems=null}
+const NAV=[['home','Início','<path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/>','tab'],['parc','Contas','<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h4"/>','tab'],null,
+  ['metas','Metas','<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".6"/>','tab'],['ajustes','Ajustes','<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>','tab']];
 function navHtml(){
   return '<nav class="nav" aria-label="Navegação"><div class="nav-in">'+NAV.map(n=>n?'<button class="'+(S.tab===n[0]?'on':'')+'" data-act="'+n[3]+'" data-arg="'+n[0]+'"'+(S.tab===n[0]?' aria-current="page"':'')+'><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+n[2]+'</svg>'+n[1]+'</button>'
     :'<button class="mic" aria-label="Contar um gasto" data-act="openSheet">'+MICBIG+'</button>').join('')+'</div></nav>';
 }
 function render(){
   if(!S.ready)return;
-  if(S.mode==='call'&&!S.call)S.mode='app';
-  if(S.mode==='call'){updateCall();return}
+  if(S.mode==='call')S.mode='app';
   let h;
   if(S.err&&!S.profile&&S.mode!=='ob')h='<div class="wrap"><span class="mark">irineu<i>.</i></span><p class="err">'+esc(S.err)+'</p></div>';
   else if(S.mode==='ob')h=viewOb()+(S.setup?viewSetup():'');
-  else h=({home:viewHome,parc:viewParc,ajustes:viewAjustes}[S.tab]||viewHome)()+navHtml()+(S.sheet?viewSheet():'')+(S.gedit?viewGEdit():'')+(S.edit?viewEdit():'')+(S.medit?viewMetaEdit():'')+(S.setup?viewSetup():'');
+  else h=({home:viewHome,parc:viewContas,metas:viewMetasPage,ajustes:viewConfig}[S.tab]||viewHome)()+navHtml()+(S.sheet?viewSheet():'')+(S.gedit?viewGEdit():'')+(S.edit?viewEdit():'')+(S.medit?viewMetaEdit():'')+(S.setup?viewSetup():'');
   $('#app').innerHTML=h;
+  centerStrip();
   motion();
 }
 function focusNow(sel){const go=()=>{const el=$(sel);if(el&&document.activeElement!==el){el.focus();try{const n=el.value.length;el.setSelectionRange(n,n)}catch(e){}}};go();setTimeout(go,80)}
@@ -1139,9 +1045,9 @@ function readEdit(){const g=id=>{const el=$('#'+id);return el?el.value:null},d=S
   const r=g('e-rest');if(r!=null)d.rest=parseInt(r)||1;const fm=g('e-fim');if(fm!=null)d.fim=fm?+fm:null;const c=g('e-cartao');if(c!=null)d.cartao=c}
 
 /* ---------- movimento ---------- */
-const VERSAO='4 · 13 out';
+const VERSAO='5 · 14 out';
 const RM=window.matchMedia?matchMedia('(prefers-reduced-motion: reduce)'):{matches:false};
-let MK={},CALLSEEN=-1,CAPSEEN=-1,CLOSING=false;
+let MK={},CLOSING=false;
 function sheetKey(){return S.setup?'setup':S.medit?'meta':S.edit?'edit':S.gedit?'gedit':S.sheet?'sheet':''}
 function countUp(el){
   const t=el.textContent,i=t.search(/\d/);if(i<0)return;
@@ -1159,9 +1065,9 @@ function motion(){
       first.classList.add('v-in','grow');
       first.querySelectorAll('.ttube span').forEach((x,i)=>x.style.animationDelay=(.12+i*.05)+'s');
       first.querySelectorAll('.big').forEach(countUp);
-    }else if(S.mode==='app'&&S.tab==='home'&&S.pv!==MK.pv){
+    }else if(S.mode==='app'&&(S.tab==='home'||S.tab==='parc')&&S.pv!==MK.pv){
       const a=S.pv==null?0:S.pv,b=MK.pv==null?0:MK.pv,dx=(a>=b?28:-28)+'px';
-      first.querySelectorAll('.h1,.lime-card,.wrap>.bubble,.card').forEach((x,i)=>{x.style.setProperty('--dx',dx);x.style.animationDelay=(i*.04)+'s';x.classList.add('sx')});
+      first.querySelectorAll('.h1,.lime-card,.wrap>.bubble,.card,.violet-panel,.fat').forEach((x,i)=>{x.style.setProperty('--dx',dx);x.style.animationDelay=(i*.04)+'s';x.classList.add('sx')});
       first.querySelectorAll('.big').forEach(countUp);
     }
     if(sk&&sk!==MK.sheet){
@@ -1182,21 +1088,20 @@ function animClose(run){
 
 /* ---------- ações ---------- */
 const A={
-  obStart(){S.ob=1;S.obItems=null;S.obText='';S.err='';render();focusNow('#obtxt')},
+  obStart(){S.ob=1;obEnter();S.obText='';S.err='';render();focusNow('#obtxt')},
   async obParse(){const t=S.obText.trim();if(!t){S.err='Fala ou escreve antes de tocar em Entender.';return render()}
     S.busy=true;S.err='';render();const st=STEPS[S.ob-1];S.obItems=await parseList(st.key,t);S.obSaid=t;S.busy=false;render()},
-  obSkip(){S.draft[STEPS[S.ob-1].key]=[];S.ob++;S.obItems=null;S.obText='';render();focusNow('#obtxt')},
-  obBack(){S.ob--;S.obItems=null;S.obText='';render()},
+  obSkip(){S.draft[STEPS[S.ob-1].key]=[];S.ob++;obEnter();S.obText='';render();focusNow('#obtxt')},
+  obBack(){S.ob--;obEnter();S.obText='';render()},
   obRm(i){S.obItems.splice(+i,1);render()},
   obTom(k){S.obTom=k;render()},
-  obRedo(){S.obItems=null;S.obText=S.obSaid;render();focusNow('#obtxt')},
-  obOk(){S.draft[STEPS[S.ob-1].key]=S.obItems;S.ob++;S.obItems=null;S.obText='';render();focusNow('#obtxt')},
+  obRedo(){S.obItems=null;S.obText=S.obSaid.startsWith('(')?'':S.obSaid;render();focusNow('#obtxt')},
+  obOk(){S.draft[STEPS[S.ob-1].key]=S.obItems;S.ob++;obEnter();S.obText='';render();focusNow('#obtxt')},
   async obFinish(){S.busy=true;render();const base=ymOf(NOW()),d=S.draft;
     const p={...(S.profile||{}),onboarded:true,criado:(S.profile&&S.profile.criado)||Date.now(),tom:S.obTom,renda:d.renda||[],fixas:d.fixas||[],
-      variaveis:S.call?(d.variaveis||[]):((S.profile&&S.profile.variaveis)||[]),parcelas:(d.parcelas||[]).map(x=>({...x,base:x.base??base}))};
+      variaveis:(S.profile&&S.profile.variaveis)||[],parcelas:(d.parcelas||[]).map(x=>({...x,base:x.base??base}))};
     try{await saveProfile(p);
-      if(S.call){for(const g of (S.call.draftGastos||[]))await addGasto(g);S.call=null;await clearCall()}
-      S.mode='app';S.tab='home';toast('Pronto. Agora é só me contar os gastos.')}catch(e){toast('Não consegui salvar. Tente de novo.')}
+      S.redo=false;S.mode='app';S.tab='home';toast('Pronto. Agora é só me contar os gastos.')}catch(e){toast('Não consegui salvar. Tente de novo.')}
     S.busy=false;render();window.scrollTo(0,0)},
   tab(t){S.tab=t;S.confirmWipe=false;render();window.scrollTo(0,0)},
   openSheet(){S.sheet=true;S.pending=null;S.addText='';S.err='';render();if(SR)micStart('sheet');else focusNow('#addtxt')},
@@ -1224,7 +1129,7 @@ const A={
       S.gedit=null;toast('Lançamento salvo.')}catch(e){toast('Não consegui salvar agora.')}render()},
   async geditDel(){const g=S.gedit;if(!g)return;if(!S.gSure){S.gSure=true;return render()}
     try{await delGasto(g.id);S.gedit=null;S.gSure=false;toast('Lançamento apagado.')}catch(e){toast('Não consegui apagar agora.')}render()},
-  geditNew(){const y=ymOf(NOW())+1;S.gSure=false;S.gedit={id:null,descricao:'',valor_total:0,parcelas:1,cartao:'Outro',forma:'pix',categoria:'Outros',entrada:false,fala:'',ym:y,ts:new Date(Math.floor(y/12),y%12,1,12).getTime()};render();focusNow('#f-desc')},
+  geditNew(){const o=offOf(),y=ymOf(NOW())+(o>0?o:0);S.gSure=false;S.gedit={id:null,descricao:'',valor_total:0,parcelas:1,cartao:'Outro',forma:'pix',categoria:'Outros',entrada:false,fala:'',ym:y,ts:new Date(Math.floor(y/12),y%12,1,12).getTime()};render();focusNow('#f-desc')},
   metaNew(){S.err='';S.editSure=false;S.medit={i:-1,nome:'',alvo:0,prazo:null};render();focusNow('#m-nome')},
   metaEdit(i){const m=((S.profile&&S.profile.metas)||[])[+i];if(!m)return;S.err='';S.editSure=false;S.medit={i:+i,nome:m.nome,alvo:m.alvo,prazo:m.prazo||null};render()},
   metaClose(){S.medit=null;S.err='';render()},
@@ -1264,11 +1169,10 @@ const A={
       if(S.call){const a=normKey(nome);S.call.duvidas=(S.call.duvidas||[]).filter(q=>normKey(q.item)!==a);await saveCall()}
       S.edit=null;S.editSure=false;S.lastUndo=null;toast(nome+' apagado.')}catch(x){S.err='Não consegui apagar agora.'}render()},
   async setTom(k){if(!S.profile||!TONS[k])return;const p={...S.profile,tom:k};try{await saveProfile(p);toast('Irineu agora no modo '+TONS[k].nome.toLowerCase()+'.')}catch(e){toast('Não consegui salvar o jeito dele agora.')}render()},
-  async redoOb(){if(S.call){S.call=null;await clearCall()}S.mode='ob';S.ob=0;S.obTom=tom();S.draft={renda:[],fixas:[],variaveis:[],parcelas:[]};S.obItems=null;render();window.scrollTo(0,0)},
+  redoOb(){const p=prof();S.redo=true;S.mode='ob';S.ob=0;S.obTom=tom();S.draft=JSON.parse(JSON.stringify({renda:p.renda,fixas:p.fixas,variaveis:p.variaveis,parcelas:p.parcelas}));S.obItems=null;render();window.scrollTo(0,0)},
   async wipe(){if(!S.confirmWipe){S.confirmWipe=true;return render()}
-    try{await wipe();S.call=null;await clearCall();S.mode='ob';S.ob=0;toast('Tudo apagado.')}catch(e){toast('Não consegui apagar tudo agora.')}S.confirmWipe=false;render()},
+    try{await wipe();S.mode='ob';S.ob=0;toast('Tudo apagado.')}catch(e){toast('Não consegui apagar tudo agora.')}S.confirmWipe=false;render()},
   toastAct(){const f=toast.fn;$('#toast').hidden=true;toast.fn=null;if(f)f()},
-  micToggle(){if(MICST.on&&MICST.target==='call')micStop();else micStart('call')},
   micSheet(){if(MICST.on&&MICST.target==='sheet')micStop();else micStart('sheet')},
   setupOpen(arg){S.setup=true;S.keyMsg='';S.impMsg='';render();if(arg==='import')setTimeout(()=>{const el=$('#imp-txt');if(el)el.scrollIntoView({block:'center'})},60)},
   setupClose(){S.setup=false;render()},
@@ -1289,33 +1193,20 @@ const A={
   exportFile(){const data=JSON.stringify({v:1,exportado:new Date().toISOString(),profile:S.profile,gastos:S.gastos});
     const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download='irineu-backup-'+new Date().toISOString().slice(0,10)+'.json';
     document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);toast('Backup baixado.')},
-  pvSet(o){S.pv=+o;render();window.scrollTo(0,0)},
-  callStart(){startCall('intro')},
-  callOpen(){if(S.call){S.mode='call';render();scrollEnd();if(SR)micStart('call');else focusNow('#calltxt');return}startCall(S.profile&&S.profile.onboarded?'livre':'intro')},
-  callResume(){S.mode='call';render();scrollEnd()},
-  callSend(){const ta=$('#calltxt'),t=((ta&&ta.value)||'').trim();if(!t)return;if(ta){ta.value='';ta.style.height=''}S.callText='';try{localStorage.removeItem('irineu_calltxt')}catch(e){}sendText(t)},
-  callQuick(q){sendText(q)},
-  callAns(o){resolveDuvida(o)},
-  callRetry(){if(S.call){S.call.retry=false;processQueue()}},
-  callLines(i){const e=S.call&&S.call.log[+i];if(e){e.open=!e.open;updateCall()}},
-  callUndo(){undoLast()},
-  callVoz(){const c=S.call;c.voz=c.voz===false;if(!c.voz)try{speechSynthesis.cancel()}catch(e){}saveCall();updateCall()},
-  callList(){S.call.showList=!S.call.showList;updateCall()},
-  callMin(){micStop();try{speechSynthesis.cancel()}catch(e){}S.mode='app';S.tab='home';render();window.scrollTo(0,0)},
-  callHang(){hangUp()}
+  pvSet(o){S.pv=+o;S.fatJust=null;render()},
+  fatToggle(k){if(S.fatOpen.has(k)){S.fatOpen.delete(k);S.fatJust=null}else{S.fatOpen.add(k);S.fatJust=k}render()},
+  goGuardar(){const el=$('#ap-0');if(el){el.scrollIntoView({block:'center',behavior:RM.matches?'auto':'smooth'});setTimeout(()=>el.focus(),350)}},
+  async wishAdd(){const n=(($('#w-nome')||{}).value||'').trim().slice(0,40),v=num(($('#w-val')||{}).value||'');if(!n||!(v>0)){toast('Escreve o desejo e quanto custa.');return}
+    const p=JSON.parse(JSON.stringify(prof()));p.desejos=(p.desejos||DESEJOS0.slice()).concat({nome:n,valor:v});await saveProfile(p);toast(n+' entrou nos desejos.');render()},
+  async wishDel(a){const p=JSON.parse(JSON.stringify(prof()));p.desejos=p.desejos||DESEJOS0.slice();const i=+String(a).replace('d','');p.desejos.splice(i,1);await saveProfile(p);render()},
 };
 
 /* ---------- eventos ---------- */
 document.addEventListener('input',e=>{const k=e.target.dataset&&e.target.dataset.bind;if(k)S[k]=e.target.value;
-  if(e.target.id==='calltxt'){try{localStorage.setItem('irineu_calltxt',S.callText)}catch(x){}const t=e.target;t.style.height='auto';t.style.height=Math.min(150,t.scrollHeight)+'px';fitDock()}});
+});
 document.addEventListener('change',e=>{if(e.target.id==='e-tipo'&&S.edit){readEdit();S.edit.d.key=e.target.value;render()}});
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&e.target.id==='calltxt'){e.preventDefault();A.callSend()}});
 ['pointerdown','mousedown'].forEach(ev=>document.addEventListener(ev,e=>{const a=document.activeElement;if(a&&a.id==='calltxt'&&e.target.closest&&e.target.closest('[data-keep]'))e.preventDefault()},true));
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;e.preventDefault();const f=A[b.dataset.act];if(!f)return;if(CLOSERS.has(b.dataset.act))animClose(()=>f(b.dataset.arg,b));else f(b.dataset.arg,b)});
-setInterval(()=>{const el=document.getElementById('calltime');if(el&&S.call)el.textContent=mmss(Date.now()-S.call.started)},1000);
-document.addEventListener('visibilitychange',()=>{const c=S.call;if(!c)return;
-  if(document.hidden){try{speechSynthesis.cancel()}catch(e){}try{localStorage.setItem('irineu_calltxt',S.callText||'')}catch(e){}saveCall()}
-  else if(S.mode==='call')updateCall()});
 
 document.addEventListener('visibilitychange',()=>{if(document.hidden){try{MICST.rec&&MICST.rec.abort()}catch(e){}}else if(MICST.on)setTimeout(listen,300)});
 
